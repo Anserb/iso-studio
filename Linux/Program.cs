@@ -16,6 +16,7 @@ internal static class Program
         startInfo.ArgumentList.Add(Path.Combine(app, "Linux", "launch.mjs"));
         foreach (var arg in args) startInfo.ArgumentList.Add(arg);
         startInfo.Environment.Remove("NODE_OPTIONS");
+        startInfo.Environment["LINUX_STUDIO_PARENT_PID"] = Environment.ProcessId.ToString();
         try
         {
             using var launcher = Process.Start(startInfo);

@@ -15,6 +15,7 @@ if (process.platform === 'linux') {
   env.LINUX_STUDIO_BUILDS_DIR ??= join(data && isAbsolute(data) ? data : join(homedir(), '.local', 'share'), 'linux-studio', 'builds');
 }
 delete env.NODE_OPTIONS;
+delete env.LINUX_STUDIO_PARENT_PID;
 const server = fork(fileURLToPath(new URL('server.mjs', root)), {
   cwd: root, env, execArgv: [], stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
 });
@@ -53,3 +54,14 @@ server.once('message', ({ port }) => {
 process.once('SIGINT', () => shutdown(130));
 process.once('SIGTERM', () => shutdown(143));
 if (process.platform === 'linux') process.once('SIGHUP', () => shutdown(129));
+
+const parent = Number(process.env.LINUX_STUDIO_PARENT_PID);
+if (Number.isSafeInteger(parent) && parent > 0) {
+  setInterval(() => {
+    try {
+      process.kill(parent, 0);
+    } catch (error) {
+      if (error.code === 'ESRCH') shutdown(0);
+    }
+  }, 1000).unref();
+}

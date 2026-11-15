@@ -174,7 +174,7 @@ const server = createServer(async (request, response) => {
       }
       if (process.getuid() !== 0 && spawnSync('sudo', ['-n', 'true'], { stdio: 'ignore', timeout: 5000 }).status !== 0) {
         return json(response, 403, {
-          error: 'Χρειάζεται πρόσβαση sudo. Κλείσε την εφαρμογή και ξεκίνησέ την από τερματικό με sudo -v && linux-studio ή sudo -v && node server.mjs.',
+          error: 'Χρειάζεται πρόσβαση sudo. Κλείσε την εφαρμογή και άνοιξέ την από τερματικό με sudo -v && ~/.local/bin/linux-studio. Από τον πηγαίο κώδικα, χρησιμοποίησε sudo -v && node server.mjs.',
         });
       }
       const id = randomUUID();
