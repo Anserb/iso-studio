@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Δες τις διανομές, τους kernel και τα εργαλεία του Linux Studio.">
+  <title>Δυνατότητες — Linux Studio</title>
+  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/features">
+  <script src="./appearance.js"></script>
+  <link rel="stylesheet" href="./site.css">
+
+</head>
+<body>
+  <header class="masthead">
+    <div class="frame bar">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
+      <nav aria-label="Κύρια πλοήγηση">
+        <a href="./">Αρχική</a>
+        <a href="./features.html" aria-current="page">Δυνατότητες</a>
+        <a href="./guide.html">Οδηγός</a>
+        <a href="./download.html">Λήψη</a>
+        <a href="./faq.html">Ερωτήσεις</a>
+        <a href="./account.html">Λογαριασμός</a>
+      </nav>
+      <details class="appearance">
+        <summary>Εμφάνιση</summary>
+        <div class="appearance-panel">
+          <label>Θέμα<select id="site-theme"><option value="system">Σύστημα</option><option value="light">Ανοιχτό</option><option value="dark">Σκούρο</option></select></label>
+          <label>Χρώμα<select id="site-accent"><option value="green">Λάιμ</option><option value="copper">Χάλκινο</option><option value="blue">Μπλε</option></select></label>
+        </div>
+      </details>
+    </div>
+  </header>
+  <main>
+    <section class="frame page-intro">
+      <h1>Τι μπορείς<br>να ρυθμίσεις.</h1>
+      <p>Διανομή, kernel, γραφικό περιβάλλον και οι εφαρμογές που θέλεις στο Live σύστημα.</p>
+    </section>
+    <section class="frame feature-grid" aria-label="Δυνατότητες εφαρμογής">
+      <article class="feature-tile"><h2>Σύστημα και kernel</h2><p>Επίλεξε Debian, Ubuntu, Arch ή Fedora. Για κάθε διανομή εμφανίζονται οι διαθέσιμες παραλλαγές kernel και η αρχιτεκτονική της εικόνας.</p><a class="text-link" href="#profiles">Σύγκρινε τις διανομές →</a></article>
+      <article class="feature-tile"><h2>Desktop και πακέτα</h2><p>Διάλεξε Xfce, GNOME, KDE Plasma ή τερματικό, ανάλογα με τη διανομή. Πρόσθεσε γλώσσα, πληκτρολόγιο και εφαρμογές.</p></article>
+      <article class="feature-tile"><h2>Σύνοψη ρυθμίσεων</h2><p>Έλεγξε σε ένα σημείο τη βάση, τον kernel, τα πακέτα και το τελικό όνομα του αρχείου.</p></article>
+      <article class="feature-tile"><h2>Bash ή δημιουργία ISO</h2><p>Εξήγαγε το σενάριο από Windows ή Linux. Με συμβατό Linux και τα απαιτούμενα εργαλεία μπορείς να εκκινήσεις τη δημιουργία και να βλέπεις την καταγραφή μέσα στην εφαρμογή.</p><a class="text-link" href="./guide.html">Οδηγός δημιουργίας →</a></article>
+    </section>
+    <section class="frame section" id="profiles" aria-labelledby="profiles-title">
+      <div class="section-copy">
+        <h2 id="profiles-title">Ξεκίνα από μια διανομή.</h2>
+        <p>Δες τους διαθέσιμους kernel και τα περιβάλλοντα εργασίας για κάθε διανομή.</p>
+      </div>
+      <fieldset class="profiles" id="distributions">
+        <legend>Διανομή Linux</legend>
+        <div class="profile-options">
+          <label><input type="radio" name="profile" value="debian" checked><span>Debian</span></label>
+          <label><input type="radio" name="profile" value="ubuntu"><span>Ubuntu</span></label>
+          <label><input type="radio" name="profile" value="arch"><span>Arch Linux</span></label>
+          <label><input type="radio" name="profile" value="fedora"><span>Fedora</span></label>
+        </div>
+        <article class="profile" data-profile="debian">
+          <h3>Debian 13</h3>
+          <dl><div><dt>Kernel</dt><dd>Standard · Real-time</dd></div><div><dt>Περιβάλλον</dt><dd>Xfce · GNOME · KDE Plasma · Τερματικό</dd></div><div><dt>Εργαλείο ISO</dt><dd>live-build</dd></div></dl>
+          <a class="text-link" href="https://github.com/Anserb/iso-studio#debian-13">Οδηγίες Debian <span aria-hidden="true">↗</span></a>
+        </article>
+        <article class="profile" data-profile="ubuntu">
+          <h3>Ubuntu 24.04 LTS</h3>
+          <dl><div><dt>Kernel</dt><dd>Generic · HWE · Low-latency</dd></div><div><dt>Περιβάλλον</dt><dd>Xfce · GNOME · KDE Plasma · Τερματικό</dd></div><div><dt>Εργαλείο ISO</dt><dd>debootstrap, Casper και GRUB</dd></div></dl>
+          <a class="text-link" href="https://github.com/Anserb/iso-studio#ubuntu-2404-lts">Οδηγίες Ubuntu <span aria-hidden="true">↗</span></a>
+        </article>
+        <article class="profile" data-profile="arch">
+          <h3>Arch Linux</h3>
+          <dl><div><dt>Kernel</dt><dd>Standard · LTS · Zen · Hardened</dd></div><div><dt>Περιβάλλον</dt><dd>Xfce · Τερματικό</dd></div><div><dt>Εργαλείο ISO</dt><dd>archiso</dd></div></dl>
+          <a class="text-link" href="https://github.com/Anserb/iso-studio#arch-linux">Οδηγίες Arch Linux <span aria-hidden="true">↗</span></a>
+        </article>
+        <article class="profile" data-profile="fedora">
+          <h3>Fedora 44</h3>
+          <dl><div><dt>Kernel</dt><dd>Standard · Debug</dd></div><div><dt>Περιβάλλον</dt><dd>Xfce · GNOME · KDE Plasma · Τερματικό</dd></div><div><dt>Εργαλείο ISO</dt><dd>Lorax σε αποκλειστική VM</dd></div></dl>
+          <a class="text-link" href="https://github.com/Anserb/iso-studio#fedora-44-σε-vm">Οδηγίες Fedora <span aria-hidden="true">↗</span></a>
+        </article>
+      </fieldset>
+    </section>
+    <section class="frame end-panel"><img src="./studio-preview.png" width="1440" height="980" alt="Ρυθμίσεις και σύνοψη ISO στο Linux Studio" loading="lazy"></section>
+  </main>
+  <footer>
+    <div class="frame bar">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
+      <div class="footer-links"><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a><a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a><a href="https://wincraft.pvgaming.uk/">WinCraft για Windows ↗</a></div>
+    </div>
+  </footer>
+</body>
+</html>

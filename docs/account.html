@@ -1,0 +1,84 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Σύνδεση και διαχείριση λογαριασμού Linux Studio.">
+  <title>Λογαριασμός — Linux Studio</title>
+  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/account">
+  <script src="./appearance.js"></script>
+  <link rel="stylesheet" href="./site.css">
+  <script type="module">
+    import('./account.js').catch(() => {
+      document.getElementById('auth-loading').textContent = 'Ο λογαριασμός δεν είναι διαθέσιμος. Ανανέωσε τη σελίδα.';
+    });
+  </script>
+</head>
+<body>
+  <header class="masthead">
+    <div class="frame bar">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
+      <nav aria-label="Κύρια πλοήγηση">
+        <a href="./">Αρχική</a>
+        <a href="./features.html">Δυνατότητες</a>
+        <a href="./guide.html">Οδηγός</a>
+        <a href="./download.html">Λήψη</a>
+        <a href="./faq.html">Ερωτήσεις</a>
+        <a href="./account.html" aria-current="page">Λογαριασμός</a>
+      </nav>
+      <details class="appearance">
+        <summary>Εμφάνιση</summary>
+        <div class="appearance-panel">
+          <label>Θέμα<select id="site-theme"><option value="system">Σύστημα</option><option value="light">Ανοιχτό</option><option value="dark">Σκούρο</option></select></label>
+          <label>Χρώμα<select id="site-accent"><option value="green">Λάιμ</option><option value="copper">Χάλκινο</option><option value="blue">Μπλε</option></select></label>
+        </div>
+      </details>
+    </div>
+  </header>
+  <main>
+    <section class="frame account-layout end-panel">
+      <div class="account-intro"><h1>Ο λογαριασμός σου.</h1><p>Μπορείς να χρησιμοποιήσεις το ίδιο email και τον ίδιο κωδικό με το WinCraft. Η αλλαγή ονόματος εμφανίζεται και στα δύο sites.</p><a href="./download.html">Πήγαινε στις λήψεις →</a></div>
+      <div class="account-card">
+        <p id="auth-loading" role="status">Φόρτωση λογαριασμού…</p>
+        <noscript><p>Ενεργοποίησε τη JavaScript για να συνδεθείς.</p></noscript>
+        <p class="account-notice" id="auth-notice" role="status" hidden></p>
+        <section id="auth-panel" hidden>
+          <h2 id="auth-title">Σύνδεση</h2>
+          <form id="auth-form" method="post">
+            <label>Email<input id="email" type="email" autocomplete="email" required></label>
+            <label id="password-field">Κωδικός<input id="password" type="password" autocomplete="current-password" required></label>
+            <label id="confirm-field" hidden>Επιβεβαίωση κωδικού<input id="confirm" type="password" autocomplete="new-password"></label>
+            <label class="checkbox" id="remember-field"><input id="remember" type="checkbox"> Διατήρηση σύνδεσης</label>
+            <button class="button primary" id="auth-submit" type="submit">Σύνδεση</button>
+          </form>
+          <div class="account-links">
+            <button type="button" data-mode="signup">Δημιουργία λογαριασμού</button>
+            <button type="button" data-mode="reset">Ξέχασα τον κωδικό</button>
+            <button type="button" data-mode="signin" hidden>Πίσω στη σύνδεση</button>
+          </div>
+        </section>
+        <section id="verify-panel" hidden>
+          <h2>Επιβεβαίωσε το email σου</h2>
+          <p id="verify-email"></p>
+          <p>Άνοιξε τον σύνδεσμο επιβεβαίωσης στο email και έπειτα έλεγξε ξανά.</p>
+          <div class="account-links"><button type="button" id="verify-check">Έλεγχος επιβεβαίωσης</button><button type="button" id="verify-send">Ξαναστείλε email</button></div>
+        </section>
+        <section id="profile-panel" hidden>
+          <h2>Προφίλ</h2>
+          <p id="profile-email"></p>
+          <form id="profile-form" method="post"><label>Εμφανιζόμενο όνομα<input id="profile-name" autocomplete="nickname" maxlength="80"></label><button class="button primary" type="submit">Αποθήκευση</button></form>
+          <dl class="profile-meta"><div><dt>Μέθοδοι σύνδεσης</dt><dd id="profile-providers"></dd></div></dl>
+          <div class="account-links"><button type="button" id="profile-reset" hidden>Επαναφορά κωδικού</button></div>
+        </section>
+        <button type="button" class="button outline" id="sign-out" hidden>Αποσύνδεση</button>
+      </div>
+    </section>
+  </main>
+  <footer>
+    <div class="frame bar">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
+      <div class="footer-links"><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a><a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a><a href="https://wincraft.pvgaming.uk/">WinCraft για Windows ↗</a></div>
+    </div>
+  </footer>
+</body>
+</html>

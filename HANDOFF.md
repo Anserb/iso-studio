@@ -27,3 +27,9 @@ node server.mjs
 ## Δημόσιο site
 
 Τα αρχεία του [linuxstudio.pvgaming.uk](https://linuxstudio.pvgaming.uk/) βρίσκονται στον φάκελο `docs/`. Από τη ρίζα του αποθετηρίου, η εντολή `npx --yes wrangler@4 deploy --config deploy/wrangler.jsonc` τα δημοσιεύει στον ξεχωριστό Cloudflare Worker `linux-studio`.
+
+Μετά από αλλαγές στις κλάσεις της αρχικής σελίδας, ανανέωσε το CSS από τη ρίζα του αποθετηρίου.
+
+```powershell
+npx --yes tailwindcss@3.4.17 --config deploy/landing.tailwind.cjs --input deploy/landing.input.css --output docs/landing.css --minify
+```

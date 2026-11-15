@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="el">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Κατέβασε το Linux Studio για Windows ή τρέξε τον πηγαίο κώδικα σε Linux.">
+  <title>Λήψη — Linux Studio</title>
+  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/download">
+  <script src="./appearance.js"></script>
+  <link rel="stylesheet" href="./site.css">
+
+</head>
+<body>
+  <header class="masthead">
+    <div class="frame bar">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
+      <nav aria-label="Κύρια πλοήγηση">
+        <a href="./">Αρχική</a>
+        <a href="./features.html">Δυνατότητες</a>
+        <a href="./guide.html">Οδηγός</a>
+        <a href="./download.html" aria-current="page">Λήψη</a>
+        <a href="./faq.html">Ερωτήσεις</a>
+        <a href="./account.html">Λογαριασμός</a>
+      </nav>
+      <details class="appearance">
+        <summary>Εμφάνιση</summary>
+        <div class="appearance-panel">
+          <label>Θέμα<select id="site-theme"><option value="system">Σύστημα</option><option value="light">Ανοιχτό</option><option value="dark">Σκούρο</option></select></label>
+          <label>Χρώμα<select id="site-accent"><option value="green">Λάιμ</option><option value="copper">Χάλκινο</option><option value="blue">Μπλε</option></select></label>
+        </div>
+      </details>
+    </div>
+  </header>
+  <main>
+    <section class="frame page-intro"><h1>Κατέβασε το<br>Linux Studio.</h1><p>Διάλεξε πού θα κάνεις τη ρύθμιση της εικόνας σου.</p></section>
+    <section class="frame feature-grid end-panel" aria-label="Επιλογές λήψης">
+      <article class="feature-tile emphasis"><h2>Windows</h2><p>Windows 10 22H2 ή Windows 11, συμβατά με x64. Το setup ανοίγει την εφαρμογή και σου επιτρέπει να εξαγάγεις το σενάριο Bash.</p><a class="button primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.exe">Λήψη .exe <span aria-hidden="true">↓</span></a><a class="text-link" href="https://github.com/Anserb/iso-studio/releases/latest">Σημειώσεις έκδοσης ↗</a></article>
+      <article class="feature-tile"><h2>Linux</h2><p>Άνοιξε το έργο με Node.js 22 ή νεότερο. Εγκατέστησε τα εργαλεία ISO της διανομής που θα χρησιμοποιήσεις.</p><pre><code>node server.mjs</code></pre><a class="text-link" href="./guide.html">Οδηγίες χρήσης →</a><a class="text-link" href="https://github.com/Anserb/iso-studio">Πηγαίος κώδικας ↗</a></article>
+    </section>
+  </main>
+  <footer>
+    <div class="frame bar">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
+      <div class="footer-links"><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a><a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a><a href="https://wincraft.pvgaming.uk/">WinCraft για Windows ↗</a></div>
+    </div>
+  </footer>
+</body>
+</html>

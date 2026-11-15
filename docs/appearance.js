@@ -6,7 +6,7 @@
   const accents = ['green', 'copper', 'blue'];
   let saved;
   try { saved = JSON.parse(localStorage.getItem(key)); } catch { /* Use defaults. */ }
-  let theme = themes.includes(saved?.theme) ? saved.theme : 'light';
+  let theme = themes.includes(saved?.theme) ? saved.theme : 'dark';
   let accent = accents.includes(saved?.accent) ? saved.accent : 'green';
 
   function apply() {
