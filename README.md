@@ -1,4 +1,4 @@
-# ISO Studio
+# Linux Studio
 
 Τοπική εφαρμογή για παραμετροποίηση εικόνων Linux Live για υπολογιστές x86‑64. Η διανομή καθορίζει ποιοι kernel, γραφικά περιβάλλοντα και εργαλεία δημιουργίας είναι διαθέσιμα.
 
@@ -23,7 +23,7 @@ node server.mjs
 
 ## Εγκατάσταση στα Windows
 
-Κατέβασε και εκτέλεσε το [ISOStudioSetup.exe](https://github.com/Anserb/iso-studio/releases/latest) σε Windows 10 22H2 ή Windows 11 συμβατά με x64. Άνοιξε το **ISO Studio** από το μενού Έναρξη. Το setup περιλαμβάνει τα runtimes Node.js και .NET. Η εφαρμογή χρησιμοποιεί το WebView2 των Windows και προσφέρει άνοιγμα στον προεπιλεγμένο browser αν το WebView2 δεν είναι διαθέσιμο. Η απεγκατάσταση γίνεται από **Ρυθμίσεις → Εφαρμογές → Εγκατεστημένες εφαρμογές**.
+Κατέβασε και εκτέλεσε το [LinuxStudioSetup.exe](https://github.com/Anserb/iso-studio/releases/latest) σε Windows 10 22H2 ή Windows 11 συμβατά με x64. Άνοιξε το **Linux Studio** από το μενού Έναρξη. Το setup περιλαμβάνει τα runtimes Node.js και .NET. Η εφαρμογή χρησιμοποιεί το WebView2 των Windows και προσφέρει άνοιγμα στον προεπιλεγμένο browser αν το WebView2 δεν είναι διαθέσιμο. Η απεγκατάσταση γίνεται από **Ρυθμίσεις → Εφαρμογές → Εγκατεστημένες εφαρμογές**.
 
 Στα Windows μπορείς να διαμορφώσεις την εικόνα και να εξαγάγεις το σενάριο. Η παραγωγή του ISO εκτελείται σε συμβατό περιβάλλον Linux.
 
@@ -37,7 +37,7 @@ node server.mjs
 .\installer\build-installer.ps1
 ```
 
-Το εκτελέσιμο δημιουργείται στο `release/ISOStudioSetup.exe`. Ο πηγαίος κώδικας διατίθεται με την [άδεια MIT](LICENSE).
+Το εκτελέσιμο δημιουργείται στο `release/LinuxStudioSetup.exe`. Ο πηγαίος κώδικας διατίθεται με την [άδεια MIT](LICENSE).
 
 ## Δημιουργία ISO
 

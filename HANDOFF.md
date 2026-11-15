@@ -1,4 +1,4 @@
-# Συνέχεια του ISO Studio στο Visual Studio
+# Συνέχεια του Linux Studio στο Visual Studio
 
 Άνοιξε το `ISOStudio.slnx` στο Visual Studio και πάτησε **F5**. Χρειάζεται το workload **.NET desktop development** και Node.js 22 ή νεότερο στο PATH. Ο πηγαίος κώδικας του παραθύρου βρίσκεται στο `Windows/Program.cs` και τα συνδεδεμένα αρχεία HTML, CSS και JavaScript εμφανίζονται στον φάκελο `app` του Solution Explorer.
 
@@ -8,7 +8,7 @@
 node server.mjs
 ```
 
-Χρειάζεται Node.js 22 ή νεότερο. Άνοιξε το [ISO Studio](http://127.0.0.1:4177). Αν ο server ήδη τρέχει στη θύρα 4177, χρησιμοποίησε την ανοιχτή σελίδα. Για να δοκιμάσεις τις τελευταίες αλλαγές στον server παράλληλα, εκτέλεσε `$env:PORT = '4178'; node server.mjs` και άνοιξε το [127.0.0.1:4178](http://127.0.0.1:4178).
+Χρειάζεται Node.js 22 ή νεότερο. Άνοιξε το [Linux Studio](http://127.0.0.1:4177). Αν ο server ήδη τρέχει στη θύρα 4177, χρησιμοποίησε την ανοιχτή σελίδα. Για να δοκιμάσεις τις τελευταίες αλλαγές στον server παράλληλα, εκτέλεσε `$env:PORT = '4178'; node server.mjs` και άνοιξε το [127.0.0.1:4178](http://127.0.0.1:4178).
 
 ## Τι υπάρχει
 
@@ -22,4 +22,4 @@ node server.mjs
 
 ## Windows installer
 
-Το `installer/build-installer.ps1` δημοσιεύει την εφαρμογή μαζί με τα runtimes .NET και Node.js και δημιουργεί το `release/ISOStudioSetup.exe` μέσω Inno Setup 6. Το παράθυρο των Windows ξεκινά τον τοπικό server σε ελεύθερη θύρα και τον τερματίζει όταν κλείνει. Η παραγωγή του ISO εκτελείται σε συμβατό Linux.
+Το `installer/build-installer.ps1` δημοσιεύει την εφαρμογή μαζί με τα runtimes .NET και Node.js και δημιουργεί το `release/LinuxStudioSetup.exe` μέσω Inno Setup 6. Το παράθυρο των Windows ξεκινά τον τοπικό server σε ελεύθερη θύρα και τον τερματίζει όταν κλείνει. Η παραγωγή του ISO εκτελείται σε συμβατό Linux.

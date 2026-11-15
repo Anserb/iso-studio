@@ -72,8 +72,8 @@ try {
 
     & $Compiler '/Q' "/DAppVersion=$version" "/DPayloadDir=$payload" "/O$stage" (Join-Path $PSScriptRoot 'iso-studio.iss')
     if ($LASTEXITCODE -ne 0) { throw 'Inno Setup compilation failed.' }
-    $setup = Join-Path $release 'ISOStudioSetup.exe'
-    Move-Item -LiteralPath (Join-Path $stage 'ISOStudioSetup.exe') -Destination $setup -Force
+    $setup = Join-Path $release 'LinuxStudioSetup.exe'
+    Move-Item -LiteralPath (Join-Path $stage 'LinuxStudioSetup.exe') -Destination $setup -Force
     Write-Host "Installer: $setup"
     Get-FileHash -LiteralPath $setup -Algorithm SHA256
 } finally {

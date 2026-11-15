@@ -16,14 +16,14 @@ internal static class Program
 
 internal sealed class StudioWindow : Form
 {
-    private const string AppName = "ISO Studio";
+    private const string AppName = "Linux Studio";
     private readonly CancellationTokenSource lifetime = new();
     private readonly Label status = new()
     {
         AutoSize = true,
         Anchor = AnchorStyles.None,
         ForeColor = Color.White,
-        Text = "Εκκίνηση ISO Studio…",
+        Text = "Εκκίνηση Linux Studio…",
     };
     private readonly Button browser = new()
     {
@@ -38,7 +38,7 @@ internal sealed class StudioWindow : Form
 
     public StudioWindow()
     {
-        Text = "ISO Studio — Εκκίνηση";
+        Text = "Linux Studio — Εκκίνηση";
         StartPosition = FormStartPosition.CenterScreen;
         Size = new Size(1180, 850);
         MinimumSize = new Size(420, 540);
@@ -68,7 +68,7 @@ internal sealed class StudioWindow : Form
         catch (Exception error)
         {
             if (!lifetime.IsCancellationRequested)
-                ShowError("Απέτυχε η εκκίνηση του ISO Studio.", error);
+                ShowError("Απέτυχε η εκκίνηση του Linux Studio.", error);
             return;
         }
 
@@ -133,7 +133,7 @@ internal sealed class StudioWindow : Form
         using var startup = CancellationTokenSource.CreateLinkedTokenSource(cancellation);
         startup.CancelAfter(TimeSpan.FromSeconds(15));
         var line = await server.StandardOutput.ReadLineAsync(startup.Token);
-        const string prefix = "ISO Studio · ";
+        const string prefix = "Linux Studio · ";
         if (line?.StartsWith(prefix, StringComparison.Ordinal) == true
             && Uri.TryCreate(line[prefix.Length..], UriKind.Absolute, out var uri)
             && uri.Scheme == Uri.UriSchemeHttp && uri.Host == "127.0.0.1")
@@ -158,7 +158,7 @@ internal sealed class StudioWindow : Form
         try
         {
             Process.Start(new ProcessStartInfo(home.AbsoluteUri) { UseShellExecute = true })?.Dispose();
-            status.Text = "Άφησε αυτό το παράθυρο ανοιχτό όσο χρησιμοποιείς το ISO Studio.";
+            status.Text = "Άφησε αυτό το παράθυρο ανοιχτό όσο χρησιμοποιείς το Linux Studio.";
         }
         catch (Exception error)
         {

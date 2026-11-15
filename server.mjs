@@ -186,5 +186,5 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, '127.0.0.1', () => {
-  console.log(`ISO Studio · http://127.0.0.1:${server.address().port}`);
+  console.log(`Linux Studio · http://127.0.0.1:${server.address().port}`);
 });
