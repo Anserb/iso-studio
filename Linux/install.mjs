@@ -1,10 +1,10 @@
-import { copyFile, mkdir, rename, writeFile } from 'node:fs/promises';
+import { copyFile, lstat, mkdir, mkdtemp, rename, rm, symlink, writeFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
-import { dirname, isAbsolute, join } from 'node:path';
+import { basename, dirname, isAbsolute, join } from 'node:path';
 
 const files = [
   'app.mjs', 'catalog.mjs', 'index.html', 'other-builders.mjs', 'recipe.mjs',
-  'server.mjs', 'style.css', 'Linux/launch.mjs', 'LICENSE',
+  'server.mjs', 'style.css', 'updates.mjs', 'Linux/launch.mjs', 'LICENSE',
 ];
 const app = new URL('../', import.meta.url);
 
@@ -19,7 +19,8 @@ if (Number(process.versions.node.split('.')[0]) < 22) {
 
 const home = homedir();
 const data = isAbsolute(process.env.XDG_DATA_HOME ?? '') ? process.env.XDG_DATA_HOME : join(home, '.local', 'share');
-const target = join(data, 'linux-studio', 'app');
+const location = join(data, 'linux-studio');
+const target = join(location, 'app');
 const launcher = join(home, '.local', 'bin', 'linux-studio');
 const desktop = join(data, 'applications', 'uk.pvgaming.linuxstudio.desktop');
 const launchScript = join(target, 'Linux', 'launch.mjs');
@@ -30,19 +31,39 @@ const desktopQuote = (value) => '"' + value
   .replaceAll('\\', '\\\\')
   .replaceAll('%', '%%') + '"';
 
+let staged;
+let nextLink;
+let published = false;
 try {
+  await mkdir(location, { recursive: true, mode: 0o700 });
+  staged = await mkdtemp(join(location, 'release-'));
   for (const file of files) {
-    const destination = join(target, file);
+    const destination = join(staged, file);
     await mkdir(dirname(destination), { recursive: true });
-    const temporary = destination + '.' + process.pid + '.tmp';
-    await copyFile(new URL(file, app), temporary);
-    await rename(temporary, destination);
+    await copyFile(new URL(file, app), destination);
+  }
+
+  nextLink = join(location, '.next-' + basename(staged));
+  await symlink(basename(staged), nextLink, 'dir');
+  const previous = await lstat(target).catch(error => {
+    if (error.code !== 'ENOENT') throw error;
+  });
+  // Older packages installed a regular app directory. Keep it available if migration fails.
+  const legacy = previous?.isDirectory() ? join(location, 'legacy-' + basename(staged)) : null;
+  if (legacy) await rename(target, legacy);
+  try {
+    await rename(nextLink, target);
+    published = true;
+  } catch (error) {
+    if (legacy) await rename(legacy, target);
+    throw error;
   }
 
   await mkdir(dirname(launcher), { recursive: true });
   await mkdir(dirname(desktop), { recursive: true });
-  await writeFile(launcher + '.new', `#!/bin/sh\nexec ${shellQuote(process.execPath)} ${shellQuote(launchScript)} "$@"\n`, { mode: 0o755, flag: 'w' });
-  await rename(launcher + '.new', launcher);
+  const launcherTemp = launcher + '.' + process.pid + '.tmp';
+  await writeFile(launcherTemp, `#!/bin/sh\nexec ${shellQuote(process.execPath)} ${shellQuote(launchScript)} "$@"\n`, { mode: 0o755, flag: 'wx' });
+  await rename(launcherTemp, launcher);
   await writeFile(desktop, `[Desktop Entry]
 Type=Application
 Name=Linux Studio
@@ -56,4 +77,7 @@ Categories=Utility;
 } catch (error) {
   console.error(`Η εγκατάσταση απέτυχε: ${error.message}`);
   process.exitCode = 1;
+} finally {
+  if (nextLink && !published) await rm(nextLink, { force: true });
+  if (staged && !published) await rm(staged, { recursive: true, force: true });
 }

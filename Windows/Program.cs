@@ -85,7 +85,23 @@ internal sealed class StudioWindow : Form
                 navigation.Cancel = !Uri.TryCreate(navigation.Uri, UriKind.Absolute, out var target)
                                     || target.Scheme != home.Scheme || target.Host != home.Host || target.Port != home.Port;
             };
-            web.CoreWebView2.NewWindowRequested += (_, request) => request.Handled = true;
+            web.CoreWebView2.NewWindowRequested += (_, request) =>
+            {
+                request.Handled = true;
+                if (request.IsUserInitiated && Uri.TryCreate(request.Uri, UriKind.Absolute, out var target)
+                    && target.Scheme == Uri.UriSchemeHttps && target.Host == "linuxstudio.pvgaming.uk"
+                    && target.IsDefaultPort && target.AbsolutePath == "/guide")
+                {
+                    try
+                    {
+                        Process.Start(new ProcessStartInfo(target.AbsoluteUri) { UseShellExecute = true })?.Dispose();
+                    }
+                    catch (System.ComponentModel.Win32Exception error)
+                    {
+                        MessageBox.Show(this, error.Message, AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
+                }
+            };
             web.NavigationCompleted += (_, navigation) =>
             {
                 if (navigation.IsSuccess)
@@ -127,6 +143,9 @@ internal sealed class StudioWindow : Form
         };
         start.ArgumentList.Add(Path.Combine(start.WorkingDirectory, "server.mjs"));
         start.Environment["PORT"] = "0";
+        start.Environment.Remove("LINUX_STUDIO_WINDOWS_SETUP");
+        if (File.Exists(bundledNode) && Directory.EnumerateFiles(baseDirectory, "unins*.exe").Any())
+            start.Environment["LINUX_STUDIO_WINDOWS_SETUP"] = "1";
         start.Environment.Remove("NODE_OPTIONS");
         server = Process.Start(start) ?? throw new InvalidOperationException("Node.js did not start.");
         var errors = server.StandardError.ReadToEndAsync(cancellation);
@@ -138,10 +157,27 @@ internal sealed class StudioWindow : Form
             && Uri.TryCreate(line[prefix.Length..], UriKind.Absolute, out var uri)
             && uri.Scheme == Uri.UriSchemeHttp && uri.Host == "127.0.0.1")
         {
+            _ = WatchUpdatesAsync(server.StandardOutput, cancellation);
             return uri;
         }
         var detail = await errors.WaitAsync(startup.Token);
         throw new InvalidOperationException(string.IsNullOrWhiteSpace(detail) ? "No address was returned by the server." : detail);
+    }
+
+    private async Task WatchUpdatesAsync(StreamReader output, CancellationToken cancellation)
+    {
+        try
+        {
+            while (await output.ReadLineAsync(cancellation) is { } line)
+            {
+                if (line != "Linux Studio · update-started") continue;
+                BeginInvoke(new Action(Close));
+                return;
+            }
+        }
+        catch (OperationCanceledException) { }
+        catch (IOException) { }
+        catch (InvalidOperationException) { }
     }
 
     private void OfferBrowser()

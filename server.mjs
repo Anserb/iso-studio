@@ -1,19 +1,29 @@
 import { spawn, spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
-import { access, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { delimiter, join, resolve } from 'node:path';
+import { homedir } from 'node:os';
+import { delimiter, dirname, isAbsolute, join, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { catalog } from './catalog.mjs';
 import { makeRecipe } from './recipe.mjs';
+import { createUpdater } from './updates.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
 const builds = process.env.LINUX_STUDIO_BUILDS_DIR
   ? resolve(process.env.LINUX_STUDIO_BUILDS_DIR)
   : join(root, 'builds');
 const port = Number(process.env.PORT ?? '4177');
+const configHome = process.platform === 'win32' ? process.env.LOCALAPPDATA : process.env.XDG_CONFIG_HOME;
+const appearance = join(isAbsolute(configHome ?? '') ? configHome : join(homedir(), '.config'), 'linux-studio', 'appearance');
+const dataHome = process.env.XDG_DATA_HOME;
+const linuxApp = join(isAbsolute(dataHome ?? '') ? dataHome : join(homedir(), '.local', 'share'), 'linux-studio', 'app');
+const installed = process.platform === 'linux' ? process.getuid() !== 0 && resolve(root) === await realpath(linuxApp).catch(() => null)
+  : process.platform === 'win32' && process.env.LINUX_STUDIO_WINDOWS_SETUP === '1';
+const updater = createUpdater({ directory: join(dirname(appearance), 'updates'), installed });
+let applyingUpdate = false;
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
@@ -41,7 +51,9 @@ const statuses = Object.fromEntries(await Promise.all(catalog.distros.map(async 
   let available = false;
   if (osValue('ID') !== distro.id || (distro.release && (osValue('VERSION_CODENAME') || osValue('VERSION_ID')) !== distro.release)) {
     const host = distro.needsVm ? `μια αποκλειστική VM με ${distro.name}` : `${distro.name} x86‑64`;
-    message = `Για δημιουργία ISO χρειάζεται ${host}. Μπορείς να κατεβάσεις το σενάριο εδώ.`;
+    message = process.platform === 'win32'
+      ? `Η εφαρμογή τρέχει σε Windows. Κατέβασε το σενάριο Bash και εκτέλεσέ το σε ${host} για να δημιουργήσεις το ISO.`
+      : `Για δημιουργία ISO χρειάζεται ${host}. Μπορείς να κατεβάσεις το σενάριο εδώ.`;
   } else if (distro.needsVm && spawnSync('systemd-detect-virt', ['--vm', '--quiet']).status !== 0) {
     message = `Για δημιουργία ISO με Lorax χρειάζεται μια αποκλειστική VM με ${distro.name}.`;
   } else {
@@ -61,7 +73,7 @@ function json(response, status, data) {
   response.end(JSON.stringify(data));
 }
 
-async function readRecipe(request) {
+async function readJson(request) {
   if (request.headers['content-type'] !== 'application/json') {
     throw new Error('Απαιτείται διαμόρφωση JSON.');
   }
@@ -75,13 +87,11 @@ async function readRecipe(request) {
     }
     chunks.push(chunk);
   }
-  let options;
   try {
-    options = JSON.parse(Buffer.concat(chunks).toString());
+    return JSON.parse(Buffer.concat(chunks).toString());
   } catch {
     throw new Error('Άκυρη διαμόρφωση JSON.');
   }
-  return makeRecipe(options);
 }
 
 function append(job, message) {
@@ -135,6 +145,25 @@ const server = createServer(async (request, response) => {
         return response.end(content);
       }
       if (path === '/api/status') return json(response, 200, { statuses, latestJob });
+      if (path === '/api/update') return json(response, 200, updater.info());
+      if (path === '/api/update/file') {
+        const update = await updater.verifiedUpdate();
+        if (!update) return json(response, 404, { error: 'Δεν υπάρχει διαθέσιμο πακέτο ενημέρωσης.' });
+        response.writeHead(200, {
+          'Content-Type': 'application/octet-stream',
+          'Content-Disposition': `attachment; filename="${update.name}"`,
+          'Content-Length': update.size,
+        });
+        await pipeline(createReadStream(update.path), response);
+        return;
+      }
+      if (path === '/api/appearance') {
+        const theme = await readFile(appearance, 'utf8').catch(error => {
+          if (error.code !== 'ENOENT') throw error;
+          return 'dark';
+        });
+        return json(response, 200, { theme: theme === 'light' ? 'light' : 'dark' });
+      }
       const match = /^\/api\/builds\/([a-f0-9-]+)(\/iso)?$/.exec(path);
       const job = match && jobs.get(match[1]);
       if (job && !match[2]) {
@@ -153,10 +182,48 @@ const server = createServer(async (request, response) => {
         return;
       }
     }
+    if (request.method === 'POST' && path === '/api/update/check') {
+      void updater.check();
+      return json(response, 202, updater.info());
+    }
+    if (request.method === 'POST' && path === '/api/update/install') {
+      if (applyingUpdate || jobs.get(latestJob)?.state === 'running') {
+        return json(response, 409, { error: 'Περίμενε να ολοκληρωθεί η εργασία που εκτελείται.' });
+      }
+      applyingUpdate = true;
+      try {
+        if (!(await updater.install())) return json(response, 409, { error: 'Η εγκατάσταση της ενημέρωσης δεν είναι διαθέσιμη.' });
+        json(response, 200, updater.info());
+        if (process.platform === 'win32') console.log('Linux Studio · update-started');
+        return;
+      } catch (error) {
+        return json(response, 500, { error: error.message });
+      } finally {
+        applyingUpdate = false;
+      }
+    }
+    if (request.method === 'POST' && path === '/api/appearance') {
+      let theme;
+      try {
+        theme = (await readJson(request))?.theme;
+      } catch (error) {
+        return json(response, 400, { error: error.message });
+      }
+      if (theme !== 'light' && theme !== 'dark') return json(response, 400, { error: 'Άγνωστο θέμα.' });
+      await mkdir(dirname(appearance), { recursive: true, mode: 0o700 });
+      const staged = `${appearance}.${randomUUID()}.tmp`;
+      try {
+        await writeFile(staged, theme, { flag: 'wx', mode: 0o600 });
+        await rename(staged, appearance);
+      } finally {
+        await rm(staged, { force: true });
+      }
+      return json(response, 200, { theme });
+    }
     if (request.method === 'POST' && ['/api/recipe', '/api/builds'].includes(path)) {
       let recipe;
       try {
-        recipe = await readRecipe(request);
+        recipe = makeRecipe(await readJson(request));
       } catch (error) {
         return json(response, 400, { error: error.message });
       }
@@ -169,7 +236,7 @@ const server = createServer(async (request, response) => {
       }
       const builder = statuses[recipe.distro];
       if (!builder.available) return json(response, 503, { error: builder.message });
-      if (jobs.get(latestJob)?.state === 'running') {
+      if (applyingUpdate || jobs.get(latestJob)?.state === 'running') {
         return json(response, 409, { error: 'Υπάρχει ήδη μια δημιουργία ISO σε εξέλιξη.' });
       }
       if (process.getuid() !== 0 && spawnSync('sudo', ['-n', 'true'], { stdio: 'ignore', timeout: 5000 }).status !== 0) {

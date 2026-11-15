@@ -3,87 +3,136 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark light">
   <title>Linux Studio — Δημιουργία Linux ISO</title>
   <link rel="stylesheet" href="/style.css">
   <script type="module" src="/app.mjs"></script>
 </head>
 <body>
-  <header class="topbar">
-    <div class="topbar-content">
-      <a class="brand" href="/" aria-label="Linux Studio, αρχική"><span class="brand-icon" aria-hidden="true">›_</span>Linux Studio</a>
-      <nav aria-label="Ενότητες">
-        <a href="#system">Σύστημα</a><a href="#desktop">Περιβάλλον</a><a href="#packages">Πακέτα</a><a href="#summary">Σύνοψη</a>
-      </nav>
-      <span class="version" aria-label="Έκδοση 0.2.0">v0.2.0</span>
+  <aside class="sidebar" aria-label="Linux Studio">
+    <a class="brand" href="#overview"><span class="brand-icon" aria-hidden="true">›_</span><strong>Linux Studio</strong></a>
+    <nav class="side-nav" aria-label="Ενότητες">
+      <a href="#overview"><span aria-hidden="true">⌂</span> Επισκόπηση</a>
+      <a href="#system" data-wizard-link><span aria-hidden="true">◉</span> Εργαστήριο ISO</a>
+      <a href="#build-result" id="log-nav" hidden><span aria-hidden="true">≡</span> Καταγραφή</a>
+      <a href="https://linuxstudio.pvgaming.uk/guide" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Οδηγός</a>
+    </nav>
+    <div class="sidebar-footer">
+      <span class="version">Linux Studio v0.3.0</span>
+      <div class="theme-picker" role="group" aria-label="Θέμα εφαρμογής">
+        <button type="button" data-theme-choice="dark" aria-pressed="true">Σκούρο</button>
+        <button type="button" data-theme-choice="light" aria-pressed="false">Φωτεινό</button>
+      </div>
+      <section class="update-panel" aria-label="Ενημερώσεις εφαρμογής">
+        <div class="update-heading"><strong>Ενημερώσεις</strong><button type="button" id="update-check" aria-label="Έλεγχος ενημερώσεων">Έλεγχος</button></div>
+        <p id="update-status" role="status">Έλεγχος για νέα έκδοση…</p>
+        <button type="button" class="primary" id="update-install" hidden>Εγκατάσταση και επανεκκίνηση</button>
+        <a id="update-file" class="secondary" href="/api/update/file" download hidden>Λήψη ενημέρωσης</a>
+      </section>
     </div>
-  </header>
-  <main class="page">
-    <div class="intro">
-      <h1>Το δικό σου <span>Linux ISO</span></h1>
-      <p>Ρύθμισε τη διανομή, τον kernel και τις εφαρμογές της εικόνας Linux Live.</p>
-    </div>
-    <div class="workspace">
-      <form id="configuration" class="form-stack">
-        <section class="panel" id="system" aria-labelledby="system-title">
-          <header class="section-title">
-            <span class="section-icon" aria-hidden="true">▦</span>
-            <div><h2 id="system-title">Σύστημα</h2><p>Οι διαθέσιμοι kernel εξαρτώνται από τη διανομή.</p></div>
-          </header>
-          <fieldset class="distros" id="distro-choices"><legend>Διανομή Linux</legend></fieldset>
-          <div class="field-grid">
-            <label>Kernel<select name="kernel"></select><small id="kernel-package"></small></label>
-            <label class="image-name">Όνομα εικόνας<input name="name" value="my-linux" required maxlength="32" pattern="[a-z0-9](?:[a-z0-9\-]{0,30}[a-z0-9])?" aria-describedby="name-hint" spellcheck="false" autocomplete="off"><small id="name-hint">Πεζά λατινικά, αριθμοί και ενδιάμεσες παύλες.</small></label>
-            <label>Γλώσσα συστήματος<select name="language"></select></label>
-            <label>Πληκτρολόγιο<select name="keyboard"></select></label>
-          </div>
-        </section>
-        <div class="customization">
-          <section class="panel" id="desktop" aria-labelledby="desktop-title">
-            <header class="section-title">
-              <span class="section-icon" aria-hidden="true">◫</span>
-              <div><h2 id="desktop-title">Επιφάνεια εργασίας</h2><p>Διάλεξε το περιβάλλον που θα ανοίγει στο Live σύστημα.</p></div>
-            </header>
-            <fieldset class="choices" id="desktop-choices"><legend class="visually-hidden">Γραφικό περιβάλλον</legend></fieldset>
-          </section>
-          <section class="panel" id="packages" aria-labelledby="packages-title">
-            <header class="section-title">
-              <span class="section-icon" aria-hidden="true">⊞</span>
-              <div><h2 id="packages-title">Πακέτα και εγκατάσταση</h2><p>Πρόσθεσε εφαρμογές και επιλογές στην εικόνα.</p></div>
-            </header>
-            <fieldset class="packages" id="app-choices"><legend class="visually-hidden">Πρόσθετα πακέτα</legend></fieldset>
-            <div class="extras" id="extras">
-              <label class="extra"><input type="checkbox" name="firmware" checked><span>Firmware υλικού<small>Συμπερίλαβε firmware, π.χ. για κάρτες Wi‑Fi.</small></span></label>
-              <label class="extra"><input type="checkbox" name="installer"><span>Debian Installer<small>Πρόσθεσε επιλογή εγκατάστασης στον δίσκο.</small></span></label>
-            </div>
-          </section>
+  </aside>
+  <main class="page" id="main">
+    <section id="overview" aria-labelledby="overview-title" hidden>
+      <header class="overview-hero">
+        <div class="hero-content">
+          <h1 id="overview-title">Το δικό σου Linux.</h1>
+          <p>Διάλεξε διανομή, kernel και desktop και φτιάξε τη δική σου εικόνα Linux Live.</p>
+          <a class="primary" href="#system">Ρύθμιση ISO <span aria-hidden="true">→</span></a>
         </div>
-      </form>
-      <aside class="summary" id="summary" aria-labelledby="summary-title">
-        <section class="panel summary-panel">
-          <header class="summary-header"><span class="section-icon" aria-hidden="true">◌</span><h2 id="summary-title">Σύνοψη ISO</h2></header>
-          <div class="file">
-            <span class="file-icon" aria-hidden="true">◉</span><div><strong id="filename"></strong><small>Εικόνα Linux Live</small></div>
+        <div class="hero-terminal" aria-hidden="true"><div><i></i><i></i><i></i></div><b>linux-studio</b><span>› distribution</span><span>› kernel</span><span>› desktop</span><span>› live image.iso</span></div>
+      </header>
+      <h2 class="overview-heading">Ξεκίνα με μια διανομή</h2>
+      <div class="overview-grid" id="quick-distros"></div>
+    </section>
+    <div id="wizard">
+      <header class="intro">
+        <div>
+          <h1>Δημιουργία <span>Linux ISO</span></h1>
+          <p>Από τη διανομή και τον kernel μέχρι τις εφαρμογές και την εγκατάσταση.</p>
+        </div>
+        <span class="platform"><span aria-hidden="true">◈</span> Linux Live · x86-64</span>
+      </header>
+      <nav class="wizard-nav" aria-label="Βήματα δημιουργίας ISO">
+        <a href="#system" data-step="system" aria-current="step"><span>1</span><div><strong>Διανομή</strong><small>Βάση και kernel</small></div></a>
+        <a href="#desktop" data-step="desktop"><span>2</span><div><strong>Περιβάλλον</strong><small>Desktop</small></div></a>
+        <a href="#regional" data-step="regional"><span>3</span><div><strong>Γλώσσα</strong><small>Πληκτρολόγιο</small></div></a>
+        <a href="#packages" data-step="packages"><span>4</span><div><strong>Εφαρμογές</strong><small>Πρόσθετα πακέτα</small></div></a>
+        <a href="#installation" data-step="installation"><span>5</span><div><strong>Εγκατάσταση</strong><small>Firmware και installer</small></div></a>
+        <a href="#summary" data-step="summary"><span>6</span><div><strong>Σύνοψη</strong><small>Έλεγχος και δημιουργία</small></div></a>
+      </nav>
+      <div class="workspace">
+        <div class="wizard-content">
+          <form id="configuration" novalidate>
+            <section class="panel" id="system" data-page aria-labelledby="system-title">
+              <header class="section-title"><span class="section-icon" aria-hidden="true">▦</span><div><h2 id="system-title">Βάση του ISO</h2><p>Η διανομή καθορίζει τους διαθέσιμους kernel και το εργαλείο δημιουργίας.</p></div></header>
+              <fieldset class="distros" id="distro-choices"><legend>Διανομή Linux</legend></fieldset>
+              <div class="field-grid">
+                <label>Kernel<select name="kernel"></select><small id="kernel-package"></small></label>
+                <label>Όνομα εικόνας<input name="name" value="my-linux" required maxlength="32" pattern="[a-z0-9](?:[a-z0-9\-]{0,30}[a-z0-9])?" aria-describedby="name-hint" spellcheck="false" autocomplete="off"><small id="name-hint">1–32 πεζά λατινικά, αριθμοί και ενδιάμεσες παύλες.</small></label>
+              </div>
+            </section>
+            <section class="panel" id="desktop" data-page aria-labelledby="desktop-title" hidden>
+              <header class="section-title"><span class="section-icon" aria-hidden="true">◫</span><div><h2 id="desktop-title">Επιφάνεια εργασίας</h2><p>Διάλεξε το περιβάλλον που θα ανοίγει στο Live σύστημα.</p></div></header>
+              <fieldset class="choices" id="desktop-choices"><legend class="visually-hidden">Γραφικό περιβάλλον</legend></fieldset>
+            </section>
+            <section class="panel" id="regional" data-page aria-labelledby="regional-title" hidden>
+              <header class="section-title"><span class="section-icon" aria-hidden="true">◎</span><div><h2 id="regional-title">Γλώσσα και πληκτρολόγιο</h2><p>Ρύθμισε τις προεπιλογές που θα χρησιμοποιεί η εικόνα Live.</p></div></header>
+              <div class="field-grid"><label>Γλώσσα συστήματος<select name="language"></select></label><label>Διάταξη πληκτρολογίου<select name="keyboard"></select></label></div>
+            </section>
+            <section class="panel" id="packages" data-page aria-labelledby="packages-title" hidden>
+              <header class="section-title"><span class="section-icon" aria-hidden="true">⊞</span><div><h2 id="packages-title">Εφαρμογές στο ISO</h2><p>Επίλεξε τα πρόσθετα πακέτα που θα περιλαμβάνει η εικόνα.</p></div></header>
+              <fieldset class="packages" id="app-choices"><legend class="visually-hidden">Πρόσθετα πακέτα</legend></fieldset>
+            </section>
+            <section class="panel" id="installation" data-page aria-labelledby="installation-title" hidden>
+              <header class="section-title"><span class="section-icon" aria-hidden="true">◇</span><div><h2 id="installation-title">Επιλογές εγκατάστασης</h2><p>Δες τι υποστηρίζει η διανομή για υλικό και εγκατάσταση στον δίσκο.</p></div></header>
+              <div class="extras" id="extras">
+                <label class="extra"><input type="checkbox" name="firmware" checked><span>Firmware υλικού<small>Συμπερίλαβε firmware, π.χ. για κάρτες Wi-Fi.</small></span></label>
+                <label class="extra"><input type="checkbox" name="installer"><span>Debian Installer<small>Πρόσθεσε την επιλογή εγκατάστασης στον δίσκο στο μενού εκκίνησης.</small></span></label>
+              </div>
+              <p class="empty-note" id="installation-note" hidden>Το προφίλ αυτής της διανομής χρησιμοποιεί τις προεπιλεγμένες επιλογές της για το Live ISO.</p>
+            </section>
+          </form>
+          <section class="panel" id="summary" data-page aria-labelledby="summary-title" hidden>
+            <header class="section-title"><span class="section-icon" aria-hidden="true">✓</span><div><h2 id="summary-title">Έλεγχος πριν τη δημιουργία</h2><p>Αυτές οι επιλογές θα περάσουν στην εικόνα Linux Live.</p></div></header>
+            <dl class="review">
+              <div><dt>Γλώσσα</dt><dd id="review-language"></dd></div>
+              <div><dt>Πληκτρολόγιο</dt><dd id="review-keyboard"></dd></div>
+              <div><dt>Εφαρμογές</dt><dd id="review-apps"></dd></div>
+              <div><dt>Firmware</dt><dd id="review-firmware"></dd></div>
+              <div><dt>Εγκατάσταση</dt><dd id="review-installer"></dd></div>
+            </dl>
+          </section>
+          <section class="panel build-result" id="build-result" hidden aria-labelledby="build-title">
+            <header class="section-title"><span class="section-icon" aria-hidden="true">›_</span><div><h2 id="build-title">Καταγραφή δημιουργίας</h2><p id="build-status" role="status"></p></div></header>
+            <pre id="build-log" tabindex="0" aria-label="Έξοδος του εργαλείου ISO"></pre>
+            <a class="primary" id="iso-link" hidden>Λήψη ISO <span aria-hidden="true">↓</span></a>
+          </section>
+          <div class="step-footer">
+            <button class="secondary" type="button" id="previous" disabled><span aria-hidden="true">←</span> Πίσω</button>
+            <span id="step-count" aria-live="polite">Βήμα 1 από 6</span>
+            <button class="primary" type="button" id="next">Επόμενο <span aria-hidden="true">→</span></button>
           </div>
-          <dl>
+        </div>
+        <aside class="panel summary-panel" aria-labelledby="output-title">
+          <header class="section-title"><span class="section-icon" aria-hidden="true">◉</span><div><h2 id="output-title">Το ISO σου</h2><p>Τρέχουσα διαμόρφωση</p></div></header>
+          <div class="file"><small>Αρχείο εξόδου</small><strong id="filename"></strong></div>
+          <dl class="quick-review">
             <div><dt>Διανομή</dt><dd id="summary-distro"></dd></div>
-            <div><dt>Αρχιτεκτονική</dt><dd>amd64 (x86‑64)</dd></div>
             <div><dt>Kernel</dt><dd id="summary-kernel"></dd></div>
-            <div><dt>Περιβάλλον</dt><dd id="summary-desktop"></dd></div>
+            <div><dt>Desktop</dt><dd id="summary-desktop"></dd></div>
             <div><dt>Πρόσθετα πακέτα</dt><dd id="summary-apps"></dd></div>
           </dl>
+          <div class="host-box">
+            <strong id="host-title">Έλεγχος περιβάλλοντος</strong>
+            <p id="host-status" role="status">Ελέγχονται τα εργαλεία δημιουργίας…</p>
+            <a href="https://linuxstudio.pvgaming.uk/guide#build" target="_blank" rel="noopener">Οδηγίες δημιουργίας ↗</a>
+          </div>
           <div class="actions">
             <button id="build" class="primary" type="submit" form="configuration" disabled>Δημιουργία ISO <span aria-hidden="true">→</span></button>
             <button id="export" class="secondary" type="submit" form="configuration">Λήψη σεναρίου Bash <span aria-hidden="true">↓</span></button>
           </div>
-          <p class="host-status" id="host-status" role="status">Έλεγχος περιβάλλοντος δημιουργίας…</p>
-        </section>
-        <section class="panel build-result" id="build-result" hidden aria-labelledby="build-title">
-          <h2 id="build-title">Δημιουργία ISO</h2>
-          <p id="build-status" role="status"></p>
-          <pre id="build-log" tabindex="0" aria-label="Καταγραφή δημιουργίας"></pre>
-          <a class="primary" id="iso-link" hidden>Λήψη ISO <span aria-hidden="true">↓</span></a>
-        </section>
-      </aside>
+        </aside>
+      </div>
     </div>
   </main>
 </body>
