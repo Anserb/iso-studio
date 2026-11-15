@@ -143,6 +143,7 @@ internal sealed class StudioWindow : Form
         };
         start.ArgumentList.Add(Path.Combine(start.WorkingDirectory, "server.mjs"));
         start.Environment["PORT"] = "0";
+        start.Environment["LINUX_STUDIO_WINDOWS_HOST"] = "1";
         start.Environment.Remove("LINUX_STUDIO_WINDOWS_SETUP");
         if (File.Exists(bundledNode) && Directory.EnumerateFiles(baseDirectory, "unins*.exe").Any())
             start.Environment["LINUX_STUDIO_WINDOWS_SETUP"] = "1";
@@ -170,14 +171,34 @@ internal sealed class StudioWindow : Form
         {
             while (await output.ReadLineAsync(cancellation) is { } line)
             {
-                if (line != "Linux Studio · update-started") continue;
-                BeginInvoke(new Action(Close));
-                return;
+                if (line == "Linux Studio · update-started")
+                {
+                    BeginInvoke(new Action(Close));
+                    return;
+                }
+                if (line == "Linux Studio · enable-wsl") BeginInvoke(new Action(EnableWsl));
             }
         }
         catch (OperationCanceledException) { }
         catch (IOException) { }
         catch (InvalidOperationException) { }
+    }
+
+    private void EnableWsl()
+    {
+        try
+        {
+            using var process = Process.Start(new ProcessStartInfo(Path.Combine(Environment.SystemDirectory, "wsl.exe"))
+            {
+                Arguments = "--install --no-distribution",
+                UseShellExecute = true,
+                Verb = "runas",
+            });
+        }
+        catch (System.ComponentModel.Win32Exception error)
+        {
+            MessageBox.Show(this, error.Message, AppName, MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
     }
 
     private void OfferBrowser()

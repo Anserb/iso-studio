@@ -1,7 +1,7 @@
-import { spawn, spawnSync } from 'node:child_process';
+import { spawnSync } from 'node:child_process';
 import { randomUUID } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
-import { access, mkdir, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
+import { access, mkdir, open, readFile, realpath, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
 import { homedir } from 'node:os';
 import { delimiter, dirname, isAbsolute, join, resolve } from 'node:path';
@@ -10,11 +10,14 @@ import { fileURLToPath } from 'node:url';
 import { catalog } from './catalog.mjs';
 import { makeRecipe } from './recipe.mjs';
 import { createUpdater } from './updates.mjs';
+import { buildInWsl, inspectWsl, inspectWslDistro, runLogged, runToolSetup, setupWsl } from './wsl-build.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
+const windows = process.platform === 'win32';
+const windowsHost = windows && process.env.LINUX_STUDIO_WINDOWS_HOST === '1';
 const builds = process.env.LINUX_STUDIO_BUILDS_DIR
   ? resolve(process.env.LINUX_STUDIO_BUILDS_DIR)
-  : join(root, 'builds');
+  : windows ? join(process.env.LOCALAPPDATA ?? homedir(), 'linux-studio', 'builds') : join(root, 'builds');
 const port = Number(process.env.PORT ?? '4177');
 const configHome = process.platform === 'win32' ? process.env.LOCALAPPDATA : process.env.XDG_CONFIG_HOME;
 const appearance = join(isAbsolute(configHome ?? '') ? configHome : join(homedir(), '.config'), 'linux-studio', 'appearance');
@@ -46,27 +49,35 @@ async function executable(name) {
 const osRelease = process.platform === 'linux' && process.arch === 'x64'
   ? await readFile('/etc/os-release', 'utf8').catch(() => '') : '';
 const osValue = key => new RegExp(`^${key}="?([^"\\r\\n]*)"?$`, 'm').exec(osRelease)?.[1];
-const statuses = Object.fromEntries(await Promise.all(catalog.distros.map(async distro => {
+async function inspectNative(distro) {
   let message;
   let available = false;
   if (osValue('ID') !== distro.id || (distro.release && (osValue('VERSION_CODENAME') || osValue('VERSION_ID')) !== distro.release)) {
     const host = distro.needsVm ? `μια αποκλειστική VM με ${distro.name}` : `${distro.name} x86‑64`;
-    message = process.platform === 'win32'
-      ? `Η εφαρμογή τρέχει σε Windows. Κατέβασε το σενάριο Bash και εκτέλεσέ το σε ${host} για να δημιουργήσεις το ISO.`
-      : `Για δημιουργία ISO χρειάζεται ${host}. Μπορείς να κατεβάσεις το σενάριο εδώ.`;
+    message = `Για δημιουργία αυτού του ISO χρειάζεται ${host}.`;
   } else if (distro.needsVm && spawnSync('systemd-detect-virt', ['--vm', '--quiet']).status !== 0) {
     message = `Για δημιουργία ISO με Lorax χρειάζεται μια αποκλειστική VM με ${distro.name}.`;
   } else {
-    const commands = process.getuid() === 0 ? distro.commands : [...distro.commands, 'sudo'];
-    const checks = await Promise.all(commands.map(executable));
-    const missing = commands.filter((_, index) => !checks[index]);
+    const checks = await Promise.all(distro.commands.map(executable));
+    const missing = distro.commands.filter((_, index) => !checks[index]);
     available = missing.length === 0;
+    const authentication = process.getuid() === 0 ? 'root'
+      : await executable('pkexec') ? 'pkexec'
+      : await executable('sudo') ? 'sudo' : null;
     message = available
-      ? `Δημιουργία με ${distro.tool}. Αν τρέχεις ως κανονικός χρήστης, εκτέλεσε sudo -v στο τερματικό της εφαρμογής.`
-      : `Λείπουν εργαλεία δημιουργίας (${missing.join(', ')}). Δες τις οδηγίες εγκατάστασης και επανεκκίνησε την εφαρμογή.`;
+      ? `Έτοιμο για δημιουργία με ${distro.tool}.`
+      : `Χρειάζονται τα εργαλεία ${distro.tool} για να δημιουργηθεί το ISO.`;
+    if (!authentication) return { available: false, message: 'Χρειάζονται δικαιώματα διαχειριστή μέσω PolicyKit ή sudo.' };
+    return { available, message, authentication, setup: !available && authentication !== 'sudo' ? 'tools' : undefined };
   }
-  return [distro.id, { available, message }];
-})));
+  return { available, message };
+}
+
+async function getStatus(distro, entries) {
+  const status = windows ? await inspectWslDistro(distro, entries) : await inspectNative(distro);
+  if (status.setup === 'wsl' && !windowsHost) delete status.setup;
+  return status;
+}
 
 function json(response, status, data) {
   response.writeHead(status, { 'Content-Type': 'application/json; charset=utf-8' });
@@ -98,25 +109,64 @@ function append(job, message) {
   job.log = (job.log + message).slice(-32_768);
 }
 
-async function runJob(job, recipe) {
+async function runJob(job, recipe, environment) {
   try {
     await mkdir(builds, { recursive: true, mode: 0o700 });
     await mkdir(job.directory, { mode: 0o700 });
-    await writeFile(join(job.directory, 'build.sh'), recipe.script, { mode: 0o600, flag: 'wx' });
-    await new Promise((resolve, reject) => {
-      const child = spawn('/bin/bash', ['build.sh'], { cwd: job.directory, stdio: ['ignore', 'pipe', 'pipe'] });
-      for (const stream of [child.stdout, child.stderr]) {
-        stream.setEncoding('utf8').on('data', chunk => append(job, chunk));
+    const output = join(job.directory, job.filename);
+    const log = message => append(job, message);
+    let expectedSize;
+    if (windows) {
+      try {
+        expectedSize = await buildInWsl(environment.name, job.id, recipe, output, log);
+      } catch (error) {
+        await rm(output, { force: true });
+        throw error;
       }
-      child.once('error', reject);
-      child.once('close', (code, signal) => {
-        if (code === 0) resolve();
-        else reject(new Error(`Η δημιουργία τερματίστηκε (${signal ?? code}).`));
-      });
-    });
-    const file = await stat(join(job.directory, job.filename));
-    if (!file.isFile() || !file.size) throw new Error('Το ISO λείπει ή είναι κενό.');
+    } else {
+      await writeFile(join(job.directory, 'build.sh'), recipe.script, { mode: 0o600, flag: 'wx' });
+      if (environment.authentication === 'pkexec') {
+        await runLogged('pkexec', ['/bin/bash', '-c', 'cd -- "$1" && /bin/bash ./build.sh && chown -- "$2" "$3"', 'build',
+          job.directory, `${process.getuid()}:${process.getgid()}`, recipe.filename], log);
+      } else {
+        await runLogged('/bin/bash', ['build.sh'], log, { cwd: job.directory });
+      }
+    }
+    const file = await stat(output);
+    if (!file.isFile() || file.size < 32774 || (expectedSize && file.size !== expectedSize)) throw new Error('Το ISO λείπει ή είναι ελλιπές.');
+    const handle = await open(output, 'r');
+    try {
+      const { buffer } = await handle.read(Buffer.alloc(5), 0, 5, 32769);
+      if (buffer.toString('ascii') !== 'CD001') throw new Error('Το αρχείο δεν είναι έγκυρη εικόνα ISO 9660.');
+    } finally {
+      await handle.close();
+    }
     job.bytes = file.size;
+    job.state = 'ready';
+  } catch (error) {
+    append(job, `\n${error.message}\n`);
+    job.state = 'failed';
+  }
+}
+
+function occupied() {
+  return applyingUpdate || jobs.get(latestJob)?.state === 'running';
+}
+
+function createJob(kind, filename) {
+  const id = randomUUID();
+  const job = { id, kind, directory: join(builds, id), state: 'running', log: '', filename };
+  jobs.set(id, job);
+  latestJob = id;
+  return job;
+}
+
+async function runSetup(job, distro, environment) {
+  try {
+    const log = message => append(job, message);
+    if (windows) await setupWsl(distro, environment, log);
+    else await runToolSetup(distro.id, (command, args) => environment.authentication === 'root'
+      ? runLogged(command, args, log) : runLogged('pkexec', [command, ...args], log));
     job.state = 'ready';
   } catch (error) {
     append(job, `\n${error.message}\n`);
@@ -144,7 +194,13 @@ const server = createServer(async (request, response) => {
         response.writeHead(200, { 'Content-Type': asset[1] });
         return response.end(content);
       }
-      if (path === '/api/status') return json(response, 200, { statuses, latestJob });
+      if (path === '/api/status') {
+        const entries = windows ? await inspectWsl() : undefined;
+        const statuses = Object.fromEntries(await Promise.all(catalog.distros.map(async distro => [
+          distro.id, await getStatus(distro, entries),
+        ])));
+        return json(response, 200, { statuses, latestJob });
+      }
       if (path === '/api/update') return json(response, 200, updater.info());
       if (path === '/api/update/file') {
         const update = await updater.verifiedUpdate();
@@ -167,10 +223,10 @@ const server = createServer(async (request, response) => {
       const match = /^\/api\/builds\/([a-f0-9-]+)(\/iso)?$/.exec(path);
       const job = match && jobs.get(match[1]);
       if (job && !match[2]) {
-        const { id, state, log, filename, bytes } = job;
-        return json(response, 200, { id, state, log, filename, bytes });
+        const { id, kind, state, log, filename, bytes } = job;
+        return json(response, 200, { id, kind, state, log, filename, bytes });
       }
-      if (job?.state === 'ready' && match[2]) {
+      if (job?.kind === 'build' && job.state === 'ready' && match[2]) {
         const filePath = join(job.directory, job.filename);
         const info = await stat(filePath);
         response.writeHead(200, {
@@ -187,7 +243,7 @@ const server = createServer(async (request, response) => {
       return json(response, 202, updater.info());
     }
     if (request.method === 'POST' && path === '/api/update/install') {
-      if (applyingUpdate || jobs.get(latestJob)?.state === 'running') {
+      if (occupied()) {
         return json(response, 409, { error: 'Περίμενε να ολοκληρωθεί η εργασία που εκτελείται.' });
       }
       applyingUpdate = true;
@@ -220,36 +276,42 @@ const server = createServer(async (request, response) => {
       }
       return json(response, 200, { theme });
     }
-    if (request.method === 'POST' && ['/api/recipe', '/api/builds'].includes(path)) {
+    if (request.method === 'POST' && ['/api/builds', '/api/setup'].includes(path)) {
+      if (occupied()) return json(response, 409, { error: 'Υπάρχει ήδη εργασία σε εξέλιξη.' });
+      let options;
       let recipe;
       try {
-        recipe = makeRecipe(await readJson(request));
+        options = await readJson(request);
+        if (path === '/api/builds') recipe = makeRecipe(options);
       } catch (error) {
         return json(response, 400, { error: error.message });
       }
-      if (path === '/api/recipe') {
-        response.writeHead(200, {
-          'Content-Type': 'text/plain; charset=utf-8',
-          'Content-Disposition': `attachment; filename="build-${recipe.distro}-iso.sh"`,
-        });
-        return response.end(recipe.script);
+      const distro = catalog.distros.find(item => item.id === options?.distro);
+      if (!distro) return json(response, 400, { error: 'Επίλεξε υποστηριζόμενη διανομή.' });
+      const builder = await getStatus(distro, windows ? await inspectWsl() : undefined);
+      if (occupied()) return json(response, 409, { error: 'Υπάρχει ήδη εργασία σε εξέλιξη.' });
+      if (path === '/api/setup') {
+        if (!builder.setup) return json(response, 409, { error: builder.message });
+        if (builder.setup === 'wsl') {
+          json(response, 200, { systemSetup: true });
+          console.log('Linux Studio · enable-wsl');
+          return;
+        }
+        const job = createJob('setup');
+        void runSetup(job, distro, builder);
+        return json(response, 202, { id: job.id });
       }
-      const builder = statuses[recipe.distro];
       if (!builder.available) return json(response, 503, { error: builder.message });
-      if (applyingUpdate || jobs.get(latestJob)?.state === 'running') {
-        return json(response, 409, { error: 'Υπάρχει ήδη μια δημιουργία ISO σε εξέλιξη.' });
-      }
-      if (process.getuid() !== 0 && spawnSync('sudo', ['-n', 'true'], { stdio: 'ignore', timeout: 5000 }).status !== 0) {
+      if (!windows && builder.authentication !== 'root' && spawnSync('sudo', ['-n', 'true'], { stdio: 'ignore', timeout: 2500 }).status === 0) {
+        builder.authentication = 'sudo';
+      } else if (builder.authentication === 'sudo') {
         return json(response, 403, {
-          error: 'Χρειάζεται πρόσβαση sudo. Κλείσε την εφαρμογή και άνοιξέ την από τερματικό με sudo -v && ~/.local/bin/linux-studio. Από τον πηγαίο κώδικα, χρησιμοποίησε sudo -v && node server.mjs.',
+          error: 'Χρειάζεται επιβεβαίωση διαχειριστή. Εκτέλεσε sudo -v στο τερματικό από όπου άνοιξε η εφαρμογή και δοκίμασε ξανά.',
         });
       }
-      const id = randomUUID();
-      const job = { id, directory: join(builds, id), state: 'running', log: '', filename: recipe.filename };
-      jobs.set(id, job);
-      latestJob = id;
-      void runJob(job, recipe);
-      return json(response, 202, { id });
+      const job = createJob('build', recipe.filename);
+      void runJob(job, recipe, builder);
+      return json(response, 202, { id: job.id });
     }
     return json(response, 404, { error: 'Η διεύθυνση δεν βρέθηκε.' });
   } catch (error) {

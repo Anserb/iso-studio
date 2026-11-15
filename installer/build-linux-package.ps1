@@ -6,7 +6,7 @@ $stage = Join-Path $temp 'LinuxStudio'
 $archive = Join-Path $temp 'linux-studio-linux.tar.gz'
 $files = @(
     'app.mjs', 'catalog.mjs', 'index.html', 'other-builders.mjs', 'recipe.mjs',
-    'server.mjs', 'style.css', 'updates.mjs', 'Linux/install.mjs', 'Linux/launch.mjs', 'README.md', 'LICENSE'
+    'server.mjs', 'style.css', 'updates.mjs', 'wsl-build.mjs', 'Linux/install.mjs', 'Linux/launch.mjs', 'README.md', 'LICENSE'
 )
 
 try {

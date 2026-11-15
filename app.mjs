@@ -3,7 +3,8 @@ import { catalog, choicesFor, isoFilename } from './catalog.mjs';
 const byId = id => document.getElementById(id);
 const form = byId('configuration');
 const build = byId('build');
-const exportButton = byId('export');
+const setupBuilder = byId('setup-builder');
+const checkBuilder = byId('check-builder');
 const hostStatus = byId('host-status');
 const result = byId('build-result');
 const buildStatus = byId('build-status');
@@ -17,8 +18,10 @@ let updateTimer;
 let installingUpdate = false;
 let automaticRestart = false;
 let statuses = {};
-let builder = { available: false, message: 'Έλεγχος περιβάλλοντος δημιουργίας…' };
+const pendingEnvironment = { available: false, message: 'Έλεγχος περιβάλλοντος δημιουργίας…' };
+let builder = pendingEnvironment;
 let busy = false;
+let checkingEnvironment = false;
 const steps = [...document.querySelectorAll('[data-step]')];
 const previousStep = byId('previous');
 const nextStep = byId('next');
@@ -230,15 +233,20 @@ function setHostStatus(message, error = false) {
 
 function setBusy(value) {
   busy = value;
-  build.disabled = !builder.available || busy || installingUpdate;
+  build.disabled = !builder.available || busy || checkingEnvironment || installingUpdate;
+  setupBuilder.disabled = busy || checkingEnvironment || installingUpdate;
+  checkBuilder.disabled = busy || checkingEnvironment || installingUpdate;
   updateInstall.disabled = busy || installingUpdate;
 }
 
 function refreshBuilder() {
-  builder = statuses[selectedDistro().id] ?? builder;
+  builder = statuses[selectedDistro().id] ?? pendingEnvironment;
   hostStatus.parentElement.dataset.ready = String(builder.available);
   byId('host-title').textContent = builder.available ? 'Έτοιμο για δημιουργία' : 'Προϋποθέσεις δημιουργίας';
-  setHostStatus(builder.message);
+  setHostStatus(checkingEnvironment ? pendingEnvironment.message : builder.message);
+  const setupLabels = { wsl: 'Ενεργοποίηση WSL 2', distro: 'Προετοιμασία διανομής', tools: 'Εγκατάσταση εργαλείων ISO' };
+  setupBuilder.hidden = !builder.setup;
+  if (builder.setup) setupBuilder.textContent = setupLabels[builder.setup];
   setBusy(busy);
 }
 
@@ -318,15 +326,26 @@ async function followBuild(id) {
   buildStatus.textContent = 'Δημιουργία σε εξέλιξη…';
 
   try {
+    let kind;
     while (true) {
       const response = await checkedFetch(`/api/builds/${id}`);
       const job = await response.json();
+      if (kind !== job.kind) {
+        kind = job.kind;
+        byId('build-title').textContent = kind === 'setup' ? 'Προετοιμασία περιβάλλοντος' : 'Καταγραφή δημιουργίας';
+        buildStatus.textContent = kind === 'setup' ? 'Εγκατάσταση περιβάλλοντος σε εξέλιξη…' : 'Δημιουργία ISO σε εξέλιξη…';
+      }
       if (job.log !== log.textContent) {
         const atBottom = log.scrollHeight - log.scrollTop - log.clientHeight < 24;
         log.textContent = job.log;
         if (atBottom) log.scrollTop = log.scrollHeight;
       }
       if (job.state === 'ready') {
+        if (job.kind === 'setup') {
+          await loadEnvironment();
+          buildStatus.textContent = builder.available ? 'Έτοιμο. Μπορείς να δημιουργήσεις το ISO.' : 'Η εγκατάσταση ολοκληρώθηκε. Έλεγξε τις προϋποθέσεις δημιουργίας.';
+          return;
+        }
         const size = new Intl.NumberFormat('el', { maximumFractionDigits: 0 }).format(job.bytes / 1024 ** 2);
         buildStatus.textContent = `Έτοιμο · ${size} MiB`;
         isoLink.href = `/api/builds/${id}/iso`;
@@ -334,7 +353,7 @@ async function followBuild(id) {
         isoLink.hidden = false;
         return;
       }
-      if (job.state === 'failed') throw new Error('Η δημιουργία απέτυχε. Δες την καταγραφή.');
+      if (job.state === 'failed') throw new Error(kind === 'setup' ? 'Η προετοιμασία απέτυχε. Δες την καταγραφή.' : 'Η δημιουργία απέτυχε. Δες την καταγραφή.');
       await new Promise(resolve => setTimeout(resolve, 1250));
     }
   } catch (error) {
@@ -345,68 +364,89 @@ async function followBuild(id) {
   }
 }
 
+async function loadEnvironment(followExisting = false) {
+  checkingEnvironment = true;
+  refreshBuilder();
+  try {
+    const state = await (await checkedFetch('/api/status')).json();
+    statuses = state.statuses;
+    if (followExisting && state.latestJob) void followBuild(state.latestJob);
+  } catch (error) {
+    statuses = {};
+    checkingEnvironment = false;
+    refreshBuilder();
+    setHostStatus(error.message, true);
+    return;
+  }
+  checkingEnvironment = false;
+  refreshBuilder();
+}
+
+checkBuilder.addEventListener('click', () => void loadEnvironment());
+setupBuilder.addEventListener('click', async () => {
+  if (setupBuilder.disabled || !builder.setup) return;
+  setBusy(true);
+  setHostStatus('Ξεκινά η προετοιμασία…');
+  try {
+    const response = await checkedFetch('/api/setup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ distro: selectedDistro().id }),
+    });
+    const { id, systemSetup } = await response.json();
+    if (systemSetup) {
+      setHostStatus('Ολοκλήρωσε την ενεργοποίηση WSL 2 στα Windows και μετά πάτησε «Επανέλεγχος περιβάλλοντος».');
+      return;
+    }
+    const progress = followBuild(id);
+    location.hash = 'build-result';
+    await progress;
+  } catch (error) {
+    setHostStatus(error.message, true);
+  } finally {
+    setBusy(false);
+  }
+});
+
 form.addEventListener('input', event => {
   if (event.target.name === 'distro') configureDistro();
   else refreshSummary();
 });
 form.addEventListener('submit', async event => {
   event.preventDefault();
+  if (build.disabled) return;
   if (!nameInput.validity.valid) {
     location.hash = 'system';
     renderRoute();
     nameInput.reportValidity();
     return;
   }
-  const isBuild = event.submitter === build;
-  if (isBuild && (busy || !builder.available)) return;
   const data = new FormData(form);
-  const distro = selectedDistro();
   const options = Object.fromEntries(data);
   options.firmware = data.has('firmware');
   options.installer = data.has('installer');
   options.apps = data.getAll('apps');
   setHostStatus(builder.message);
-  if (isBuild) setBusy(true);
-  else exportButton.disabled = true;
+  setBusy(true);
 
   try {
-    const response = await checkedFetch(isBuild ? '/api/builds' : '/api/recipe', {
+    const response = await checkedFetch('/api/builds', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(options),
     });
-    if (isBuild) {
-      const { id } = await response.json();
-      const following = followBuild(id);
-      location.hash = 'build-result';
-      await following;
-    } else {
-      const url = URL.createObjectURL(await response.blob());
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `build-${distro.id}-iso.sh`;
-      link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 30_000);
-      if (distro === selectedDistro()) {
-        setHostStatus(`Σε ${distro.name}, εκτέλεσε sudo -v και μετά bash ${link.download}. Δες το README για τα απαιτούμενα εργαλεία.`);
-      }
-    }
+    const { id } = await response.json();
+    const following = followBuild(id);
+    location.hash = 'build-result';
+    await following;
   } catch (error) {
     setHostStatus(error.message, true);
   } finally {
-    if (isBuild) setBusy(false);
-    else exportButton.disabled = false;
+    setBusy(false);
   }
 });
 
 configureDistro();
 renderRoute();
 void refreshUpdate('/check');
-try {
-  const status = await (await checkedFetch('/api/status')).json();
-  statuses = status.statuses;
-  refreshBuilder();
-  if (status.latestJob) void followBuild(status.latestJob);
-} catch (error) {
-  setHostStatus(error.message, true);
-}
+void loadEnvironment(true);
