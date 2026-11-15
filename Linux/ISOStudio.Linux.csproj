@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+	<OutputType>Exe</OutputType>
+	<TargetFramework>net10.0</TargetFramework>
+	<Nullable>enable</Nullable>
+	<ImplicitUsings>enable</ImplicitUsings>
+	<AssemblyName>ISOStudio</AssemblyName>
+	<RootNamespace>ISOStudio.Linux</RootNamespace>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="../*.mjs;../index.html;../style.css"
+             Link="app/%(Filename)%(Extension)"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="launch.mjs" Link="app/Linux/launch.mjs"
+             CopyToOutputDirectory="PreserveNewest"
+             CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+</Project>

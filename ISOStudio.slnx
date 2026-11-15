@@ -1,3 +1,4 @@
 <Solution>
   <Project Path="Windows/ISOStudio.Windows.csproj" />
+  <Project Path="Linux/ISOStudio.Linux.csproj" />
 </Solution>

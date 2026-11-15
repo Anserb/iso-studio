@@ -3,14 +3,16 @@ import { randomUUID } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
 import { access, mkdir, readFile, stat, writeFile } from 'node:fs/promises';
 import { createServer } from 'node:http';
-import { delimiter, join } from 'node:path';
+import { delimiter, join, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { catalog } from './catalog.mjs';
 import { makeRecipe } from './recipe.mjs';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const builds = join(root, 'builds');
+const builds = process.env.LINUX_STUDIO_BUILDS_DIR
+  ? resolve(process.env.LINUX_STUDIO_BUILDS_DIR)
+  : join(root, 'builds');
 const port = Number(process.env.PORT ?? '4177');
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -170,6 +172,11 @@ const server = createServer(async (request, response) => {
       if (jobs.get(latestJob)?.state === 'running') {
         return json(response, 409, { error: 'Υπάρχει ήδη μια δημιουργία ISO σε εξέλιξη.' });
       }
+      if (process.getuid() !== 0 && spawnSync('sudo', ['-n', 'true'], { stdio: 'ignore', timeout: 5000 }).status !== 0) {
+        return json(response, 403, {
+          error: 'Χρειάζεται πρόσβαση sudo. Κλείσε την εφαρμογή και ξεκίνησέ την από τερματικό με sudo -v && linux-studio ή sudo -v && node server.mjs.',
+        });
+      }
       const id = randomUUID();
       const job = { id, directory: join(builds, id), state: 'running', log: '', filename: recipe.filename };
       jobs.set(id, job);
@@ -187,4 +194,7 @@ const server = createServer(async (request, response) => {
 
 server.listen(port, '127.0.0.1', () => {
   console.log(`Linux Studio · http://127.0.0.1:${server.address().port}`);
+  process.send?.({ port: server.address().port });
 });
+
+if (process.send) process.once('disconnect', () => process.exit());
