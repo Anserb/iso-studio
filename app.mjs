@@ -20,7 +20,6 @@ function populateSelect(field, items) {
   if (items.some(item => item.id === previous)) control.value = previous;
 }
 
-populateSelect('distro', catalog.distros);
 populateSelect('language', catalog.languages);
 const selectedDistro = () => catalog.distros.find(item => item.id === form.elements.distro.value);
 
@@ -28,6 +27,34 @@ function optionInput(type, name, value) {
   const input = document.createElement('input');
   Object.assign(input, { type, name, value });
   return input;
+}
+
+const distroCards = {
+  debian: ['D', 'Debian', '13 · Trixie'],
+  ubuntu: ['U', 'Ubuntu', '24.04 LTS'],
+  arch: ['A', 'Arch Linux', 'Rolling release'],
+  fedora: ['F', 'Fedora', '44'],
+};
+
+for (const [index, distro] of catalog.distros.entries()) {
+  const [initial, name, release] = distroCards[distro.id];
+  const label = document.createElement('label');
+  const input = optionInput('radio', 'distro', distro.id);
+  const mark = document.createElement('span');
+  const description = document.createElement('span');
+  const title = document.createElement('strong');
+  const detail = document.createElement('small');
+  label.className = 'distro';
+  label.dataset.distro = distro.id;
+  input.checked = index === 0;
+  mark.className = 'distro-mark';
+  mark.setAttribute('aria-hidden', 'true');
+  mark.textContent = initial;
+  title.textContent = name;
+  detail.textContent = release;
+  description.append(title, detail);
+  label.append(mark, description, input);
+  byId('distro-choices').append(label);
 }
 
 function desktopOption(item, choice) {

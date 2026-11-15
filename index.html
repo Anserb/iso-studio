@@ -12,15 +12,15 @@
     <div class="topbar-content">
       <a class="brand" href="/" aria-label="Linux Studio, αρχική"><span class="brand-icon" aria-hidden="true">›_</span>Linux Studio</a>
       <nav aria-label="Ενότητες">
-        <a href="#system">Σύστημα</a><a href="#desktop">Επιφάνεια εργασίας</a><a href="#packages">Πακέτα</a>
+        <a href="#system">Σύστημα</a><a href="#desktop">Περιβάλλον</a><a href="#packages">Πακέτα</a><a href="#summary">Σύνοψη</a>
       </nav>
-      <span class="platform">LIVE ISO <span>·</span> AMD64</span>
+      <span class="version" aria-label="Έκδοση 0.2.0">v0.2.0</span>
     </div>
   </header>
   <main class="page">
     <div class="intro">
-      <h1>Δημιουργία Linux ISO<span>.</span></h1>
-      <p>Διάλεξε διανομή, kernel και περιβάλλον εργασίας για τη δική σου εικόνα Linux Live.</p>
+      <h1>Το δικό σου <span>Linux ISO</span></h1>
+      <p>Ρύθμισε τη διανομή, τον kernel και τις εφαρμογές της εικόνας Linux Live.</p>
     </div>
     <div class="workspace">
       <form id="configuration" class="form-stack">
@@ -29,34 +29,36 @@
             <span class="section-icon" aria-hidden="true">▦</span>
             <div><h2 id="system-title">Σύστημα</h2><p>Οι διαθέσιμοι kernel εξαρτώνται από τη διανομή.</p></div>
           </header>
+          <fieldset class="distros" id="distro-choices"><legend>Διανομή Linux</legend></fieldset>
           <div class="field-grid">
-            <label>Διανομή Linux<select name="distro"></select></label>
             <label>Kernel<select name="kernel"></select><small id="kernel-package"></small></label>
             <label class="image-name">Όνομα εικόνας<input name="name" value="my-linux" required maxlength="32" pattern="[a-z0-9](?:[a-z0-9\-]{0,30}[a-z0-9])?" aria-describedby="name-hint" spellcheck="false" autocomplete="off"><small id="name-hint">Πεζά λατινικά, αριθμοί και ενδιάμεσες παύλες.</small></label>
             <label>Γλώσσα συστήματος<select name="language"></select></label>
             <label>Πληκτρολόγιο<select name="keyboard"></select></label>
           </div>
         </section>
-        <section class="panel" id="desktop" aria-labelledby="desktop-title">
-          <header class="section-title">
-            <span class="section-icon" aria-hidden="true">◫</span>
-            <div><h2 id="desktop-title">Επιφάνεια εργασίας</h2><p>Διάλεξε το περιβάλλον που θα ανοίγει στο Live σύστημα.</p></div>
-          </header>
-          <fieldset class="choices" id="desktop-choices"><legend class="visually-hidden">Γραφικό περιβάλλον</legend></fieldset>
-        </section>
-        <section class="panel" id="packages" aria-labelledby="packages-title">
-          <header class="section-title">
-            <span class="section-icon" aria-hidden="true">⊞</span>
-            <div><h2 id="packages-title">Πακέτα και εγκατάσταση</h2><p>Πρόσθεσε εφαρμογές και επιλογές στην εικόνα.</p></div>
-          </header>
-          <fieldset class="packages" id="app-choices"><legend class="visually-hidden">Πρόσθετα πακέτα</legend></fieldset>
-          <div class="extras" id="extras">
-            <label class="extra"><input type="checkbox" name="firmware" checked><span>Firmware υλικού<small>Συμπερίλαβε firmware, π.χ. για κάρτες Wi‑Fi.</small></span></label>
-            <label class="extra"><input type="checkbox" name="installer"><span>Debian Installer<small>Πρόσθεσε επιλογή εγκατάστασης στον δίσκο.</small></span></label>
-          </div>
-        </section>
+        <div class="customization">
+          <section class="panel" id="desktop" aria-labelledby="desktop-title">
+            <header class="section-title">
+              <span class="section-icon" aria-hidden="true">◫</span>
+              <div><h2 id="desktop-title">Επιφάνεια εργασίας</h2><p>Διάλεξε το περιβάλλον που θα ανοίγει στο Live σύστημα.</p></div>
+            </header>
+            <fieldset class="choices" id="desktop-choices"><legend class="visually-hidden">Γραφικό περιβάλλον</legend></fieldset>
+          </section>
+          <section class="panel" id="packages" aria-labelledby="packages-title">
+            <header class="section-title">
+              <span class="section-icon" aria-hidden="true">⊞</span>
+              <div><h2 id="packages-title">Πακέτα και εγκατάσταση</h2><p>Πρόσθεσε εφαρμογές και επιλογές στην εικόνα.</p></div>
+            </header>
+            <fieldset class="packages" id="app-choices"><legend class="visually-hidden">Πρόσθετα πακέτα</legend></fieldset>
+            <div class="extras" id="extras">
+              <label class="extra"><input type="checkbox" name="firmware" checked><span>Firmware υλικού<small>Συμπερίλαβε firmware, π.χ. για κάρτες Wi‑Fi.</small></span></label>
+              <label class="extra"><input type="checkbox" name="installer"><span>Debian Installer<small>Πρόσθεσε επιλογή εγκατάστασης στον δίσκο.</small></span></label>
+            </div>
+          </section>
+        </div>
       </form>
-      <aside class="summary" aria-labelledby="summary-title">
+      <aside class="summary" id="summary" aria-labelledby="summary-title">
         <section class="panel summary-panel">
           <header class="summary-header"><span class="section-icon" aria-hidden="true">◌</span><h2 id="summary-title">Σύνοψη ISO</h2></header>
           <div class="file">

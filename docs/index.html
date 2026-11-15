@@ -3,73 +3,78 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1116">
-  <meta name="description" content="Φτιάξε μια προσαρμοσμένη εικόνα Linux Live με τη διανομή, τον kernel, το γραφικό περιβάλλον και τις εφαρμογές που θέλεις.">
-  <title>Linux Studio — Το δικό σου Linux, σε ISO</title>
+  <meta name="theme-color" content="#f7f5ee">
+  <meta name="description" content="Προσάρμοσε τη διανομή, τον kernel και τις εφαρμογές του δικού σου Linux Live ISO. Ανοικτός κώδικας με άδεια MIT.">
+  <title>Linux Studio — Το Linux σου, σε δικό σου ISO</title>
+  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/">
   <link rel="stylesheet" href="./site.css">
 </head>
 <body>
-  <header class="site-header">
-    <div class="wrap header-inner">
-      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">›_</span>Linux Studio</a>
+  <header class="masthead">
+    <div class="frame header-inner">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
       <nav aria-label="Κύρια πλοήγηση">
         <a href="#distributions">Διανομές</a>
-        <a href="#how">Οδηγός</a>
+        <a href="#guide">Οδηγός</a>
         <a href="https://github.com/Anserb/iso-studio">GitHub <span aria-hidden="true">↗</span></a>
       </nav>
     </div>
   </header>
 
-  <main class="wrap">
-    <section class="hero" aria-labelledby="hero-title">
-      <div class="hero-content">
-        <p class="label">Εργαλείο ανοικτού κώδικα <span aria-hidden="true">/</span> MIT</p>
-        <h1 id="hero-title">Το δικό σου<br>Linux, <em>σε ISO.</em></h1>
-        <p class="lead">Διάλεξε διανομή, kernel, γραφικό περιβάλλον και εφαρμογές. Φτιάξε μια εικόνα Linux Live για x86‑64 με τις επιλογές σου.</p>
-        <div class="actions">
-          <a class="button primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.exe">Λήψη για Windows <span aria-hidden="true">↓</span></a>
-          <a class="button secondary" href="#how">Οδηγίες για Linux <span aria-hidden="true">→</span></a>
+  <main>
+    <section class="frame hero" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <div>
+          <p class="edition"><span aria-hidden="true"></span> Linux Studio 0.2.0</p>
+          <h1 id="hero-title">Το Linux σου,<br><em>σε δικό σου ISO.</em></h1>
         </div>
-        <p class="platform-note">Ρύθμιση σε Windows ή Linux. Δημιουργία ISO σε Linux.</p>
+        <div class="hero-details">
+          <p>Διάλεξε διανομή, kernel, γραφικό περιβάλλον και εφαρμογές. Κράτησε τις επιλογές σου σε μια εικόνα Linux Live για x86‑64.</p>
+          <a class="download" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.exe">Λήψη για Windows <span aria-hidden="true">↓</span></a>
+          <a class="text-link" href="#guide">Χρήση σε Linux <span aria-hidden="true">→</span></a>
+        </div>
       </div>
       <figure class="preview">
-        <div class="preview-bar" aria-hidden="true">
-          <span class="window-dots"><i></i><i></i><i></i></span>
-          <span>LINUX STUDIO</span>
+        <div class="preview-image">
+          <img src="./studio-preview.png" width="1440" height="980" alt="Η εφαρμογή Linux Studio σε τρεις στήλες με τις ρυθμίσεις συστήματος, το περιβάλλον εργασίας και τη σύνοψη ISO.">
         </div>
-        <img src="./studio-preview.png" width="1070" height="760" alt="Το Linux Studio με επιλογές διανομής και kernel δίπλα στη σύνοψη του ISO.">
+        <figcaption>Η εφαρμογή Linux Studio</figcaption>
       </figure>
     </section>
 
-    <section class="section" id="distributions" aria-labelledby="distro-title">
-      <h2 id="distro-title">Διάλεξε τη βάση σου.</h2>
-      <p>Κάθε διανομή προσφέρει τις δικές της παραλλαγές kernel.</p>
-      <ul class="distributions">
-        <li><h3>Debian 13</h3><p>Standard · Real-time</p></li>
-        <li><h3>Ubuntu 24.04 LTS</h3><p>Generic · HWE · Low-latency</p></li>
-        <li><h3>Arch Linux</h3><p>Standard · LTS · Zen · Hardened</p></li>
-        <li><h3>Fedora 44</h3><p>Standard · Debug</p></li>
-      </ul>
+    <section class="frame section distributions" id="distributions" aria-labelledby="distro-title">
+      <div class="section-intro">
+        <h2 id="distro-title">Τέσσερις διανομές.<br>Εσύ διαλέγεις.</h2>
+        <p>Κάθε διανομή προσφέρει τις δικές της παραλλαγές kernel και επιλογές για το Live σύστημα.</p>
+      </div>
+      <dl class="distro-list">
+        <div><dt>Debian <small>13</small></dt><dd>Standard · Real-time</dd></div>
+        <div><dt>Ubuntu <small>24.04 LTS</small></dt><dd>Generic · HWE · Low-latency</dd></div>
+        <div><dt>Arch Linux</dt><dd>Standard · LTS · Zen · Hardened</dd></div>
+        <div><dt>Fedora <small>44</small></dt><dd>Standard · Debug</dd></div>
+      </dl>
     </section>
 
-    <section class="section how" id="how" aria-labelledby="how-title">
-      <div>
-        <h2 id="how-title">Από τις επιλογές<br>στο αρχείο ISO.</h2>
-        <a class="guide-link" href="https://github.com/Anserb/iso-studio#%CE%B4%CE%B7%CE%BC%CE%B9%CE%BF%CF%85%CF%81%CE%B3%CE%AF%CE%B1-iso">Αναλυτικές οδηγίες στο GitHub <span aria-hidden="true">↗</span></a>
+    <section class="guide" id="guide" aria-labelledby="guide-title">
+      <div class="frame section">
+        <div class="section-intro">
+          <h2 id="guide-title">Από τη ρύθμιση<br>στην εκκίνηση.</h2>
+          <a class="text-link" href="https://github.com/Anserb/iso-studio#%CE%B4%CE%B7%CE%BC%CE%B9%CE%BF%CF%85%CF%81%CE%B3%CE%AF%CE%B1-iso">Οδηγίες στο GitHub <span aria-hidden="true">↗</span></a>
+        </div>
+        <ol class="steps">
+          <li><h3>Ρύθμισε την εικόνα</h3><p>Άνοιξε την εφαρμογή σε Windows ή Linux και διάλεξε τη διανομή, τον kernel και τα πακέτα σου.</p></li>
+          <li><h3>Δημιούργησε το ISO σε Linux</h3><p>Τρέξε την εφαρμογή στο αντίστοιχο Linux ή χρησιμοποίησε εκεί το σενάριο Bash που εξήγαγες από τα Windows.</p></li>
+          <li><h3>Δοκίμασε την εκκίνηση</h3><p>Άνοιξε το ISO σε εικονική μηχανή. Εκκρεμούν οι δοκιμές εκκίνησης για κάθε διανομή.</p></li>
+        </ol>
       </div>
-      <ol class="steps">
-        <li><h3>Ρύθμισε την εικόνα</h3><p>Επίλεξε kernel και desktop, όπως Xfce, GNOME ή KDE Plasma όπου διατίθενται. Πρόσθεσε εφαρμογές, γλώσσα και πληκτρολόγιο.</p></li>
-        <li><h3>Δημιούργησε σε συμβατό Linux</h3><p>Τρέξε την εφαρμογή στο αντίστοιχο Linux ή εξήγαγε από τα Windows το σενάριο Bash. Χρειάζεσαι τα εργαλεία δημιουργίας της διανομής σου.</p></li>
-        <li><h3>Δοκίμασε το ISO</h3><p>Όταν τελειώσει η δημιουργία, άνοιξε την εικόνα σε εικονική μηχανή. Οι έλεγχοι εκκίνησης για όλα τα προφίλ βρίσκονται ακόμη σε εξέλιξη.</p></li>
-      </ol>
     </section>
   </main>
 
   <footer>
-    <div class="wrap footer-inner">
-      <a class="brand" href="./"><span class="brand-mark" aria-hidden="true">›_</span>Linux Studio</a>
+    <div class="frame footer-inner">
+      <a class="wordmark" href="./"><span class="mark" aria-hidden="true">›_</span>Linux Studio</a>
       <div>
-        <a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a>
+        <a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Ανοικτός κώδικας · MIT</a>
         <a href="https://wincraft.pvgaming.uk/">WinCraft για Windows <span aria-hidden="true">↗</span></a>
       </div>
     </div>

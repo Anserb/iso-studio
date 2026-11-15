@@ -23,3 +23,7 @@ node server.mjs
 ## Windows installer
 
 Το `installer/build-installer.ps1` δημοσιεύει την εφαρμογή μαζί με τα runtimes .NET και Node.js και δημιουργεί το `release/LinuxStudioSetup.exe` μέσω Inno Setup 6. Το παράθυρο των Windows ξεκινά τον τοπικό server σε ελεύθερη θύρα και τον τερματίζει όταν κλείνει. Η παραγωγή του ISO εκτελείται σε συμβατό Linux.
+
+## Δημόσιο site
+
+Τα αρχεία του [linuxstudio.pvgaming.uk](https://linuxstudio.pvgaming.uk/) βρίσκονται στον φάκελο `docs/`. Από τη ρίζα του αποθετηρίου, η εντολή `npx --yes wrangler@4 deploy --config deploy/wrangler.jsonc` τα δημοσιεύει στον ξεχωριστό Cloudflare Worker `linux-studio`.
