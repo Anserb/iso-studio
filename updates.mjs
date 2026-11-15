@@ -1,7 +1,7 @@
 import { execFile, spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, mkdtemp, rm, stat } from 'node:fs/promises';
+import { mkdir, mkdtemp, rename, rm, stat } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
@@ -40,6 +40,14 @@ async function digest(path) {
   return hash.digest('hex');
 }
 
+async function matches(path, update) {
+  try {
+    return (await stat(path)).size === update.size && await digest(path) === update.hash;
+  } catch {
+    return false;
+  }
+}
+
 export function createUpdater({ directory, installed, request = fetch, current = version, platform = process.platform }) {
   let status = 'idle';
   let candidate;
@@ -47,8 +55,11 @@ export function createUpdater({ directory, installed, request = fetch, current =
 
   async function download(update) {
     await mkdir(directory, { recursive: true, mode: 0o700 });
-    const stage = await mkdtemp(join(directory, 'release-'));
+    const stage = join(directory, `release-${update.version}-${update.hash}`);
     const path = join(stage, update.name);
+    if (await matches(path, update)) return { stage, path };
+    const temporary = await mkdtemp(join(directory, 'download-'));
+    const partial = join(temporary, update.name);
     try {
       const response = await request(update.url, { signal: AbortSignal.timeout(180_000) });
       const destination = new URL(response.url || update.url);
@@ -67,12 +78,13 @@ export function createUpdater({ directory, installed, request = fetch, current =
           callback(null, chunk);
         },
       });
-      await pipeline(Readable.fromWeb(response.body), verify, createWriteStream(path, { flags: 'wx', mode: 0o600 }));
+      await pipeline(Readable.fromWeb(response.body), verify, createWriteStream(partial, { flags: 'wx', mode: 0o600 }));
       if (bytes !== update.size || hash.digest('hex') !== update.hash) throw new Error('Unexpected update digest.');
+      await mkdir(stage, { recursive: true, mode: 0o700 });
+      await rename(partial, path);
       return { stage, path };
-    } catch (error) {
-      await rm(stage, { recursive: true, force: true });
-      throw error;
+    } finally {
+      await rm(temporary, { recursive: true, force: true });
     }
   }
 
@@ -102,11 +114,7 @@ export function createUpdater({ directory, installed, request = fetch, current =
 
   async function verifiedUpdate() {
     if (status !== 'ready' || !cached) return null;
-    try {
-      if ((await stat(cached.path)).size === candidate.size && await digest(cached.path) === candidate.hash) {
-        return { ...candidate, path: cached.path };
-      }
-    } catch { /* Discard the unavailable package. */ }
+    if (await matches(cached.path, candidate)) return { ...candidate, path: cached.path };
     await rm(cached.stage, { recursive: true, force: true });
     cached = undefined;
     status = 'unavailable';
@@ -125,10 +133,14 @@ export function createUpdater({ directory, installed, request = fetch, current =
         await new Promise((resolve, reject) => { setup.once('spawn', resolve); setup.once('error', reject); });
         setup.unref();
       } else {
-        await run('tar', ['-xzf', update.path, '-C', cached.stage, '--no-same-owner', '--no-same-permissions']);
-        const installer = join(cached.stage, 'LinuxStudio', 'Linux', 'install.mjs');
-        await run(process.execPath, [installer], { env: { ...process.env, NODE_OPTIONS: '' } });
-        await rm(cached.stage, { recursive: true, force: true });
+        const unpack = await mkdtemp(join(directory, 'install-'));
+        try {
+          await run('tar', ['-xzf', update.path, '-C', unpack, '--no-same-owner', '--no-same-permissions']);
+          const installer = join(unpack, 'LinuxStudio', 'Linux', 'install.mjs');
+          await run(process.execPath, [installer], { env: { ...process.env, NODE_OPTIONS: '' } });
+        } finally {
+          await rm(unpack, { recursive: true, force: true });
+        }
       }
       status = 'installed';
       return true;
