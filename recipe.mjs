@@ -61,6 +61,8 @@ work="$(mktemp -d -- "$PWD/.iso-studio.XXXXXXXX")"
 cd -- "$work"
 echo "Build directory: $work"
 touch .iso-studio-result
+# The workspace and final file are private. Files inside the image need normal system permissions.
+umask 022
 
 ${steps}
 
