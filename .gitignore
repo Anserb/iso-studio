@@ -1,0 +1,7 @@
+builds/
+.vs/
+bin/
+obj/
+out/
+release/
+installer/runtime/
