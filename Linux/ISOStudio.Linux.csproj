@@ -5,7 +5,7 @@
 	<Nullable>enable</Nullable>
 	<ImplicitUsings>enable</ImplicitUsings>
 	<AssemblyName>ISOStudio</AssemblyName>
-	<Version>0.4.0</Version>
+	<Version>0.4.1</Version>
 	<RootNamespace>ISOStudio.Linux</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
