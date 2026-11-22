@@ -192,8 +192,23 @@ function configureDistro() {
     ...choices.desktops.map(item => desktopOption(item, desktop)));
   const appChoices = byId('app-choices');
   const selectedApps = selected.getAll('apps');
-  appChoices.replaceChildren(appChoices.querySelector('legend'),
-    ...choices.apps.map(item => appOption(item, distro, selectedApps.includes(item.id))));
+  const appGroups = new Map();
+  for (const item of choices.apps) {
+    if (!appGroups.has(item.category)) appGroups.set(item.category, []);
+    appGroups.get(item.category).push(appOption(item, distro, selectedApps.includes(item.id)));
+  }
+  const groups = [...appGroups].map(([category, options]) => {
+    const group = document.createElement('div');
+    const heading = document.createElement('h3');
+    const optionList = document.createElement('div');
+    group.className = 'app-category';
+    heading.textContent = category;
+    optionList.className = 'app-category-options';
+    optionList.append(...options);
+    group.append(heading, optionList);
+    return group;
+  });
+  appChoices.replaceChildren(appChoices.querySelector('legend'), ...groups);
   for (const key of ['firmware', 'installer']) {
     const input = form.elements[key];
     input.disabled = !distro[key];

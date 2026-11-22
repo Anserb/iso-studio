@@ -117,7 +117,11 @@ small { color: var(--muted); font-size: .78rem; font-weight: 400; }
 fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
 .distros legend { margin-bottom: .52rem; padding: 0; font-weight: 650; font-size: .83rem; }
 .distros, .field-grid, .choices, .packages, .extras, .overview-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .68rem; }
+.packages { grid-template-columns: minmax(0, 1fr); gap: 1rem; }
+.app-category h3 { margin-bottom: .45rem; color: var(--muted); font-size: .82rem; }
+.app-category-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
 .distros { margin-bottom: 1.25rem; }
+
 .distro, .choice, .package, .extra, .quick-distro { display: flex; align-items: center; gap: .6rem; min-width: 0; padding: .72rem; border: 1px solid var(--line); border-radius: .58rem; color: var(--text); background: var(--surface); cursor: pointer; text-align: left; }
 .distro:hover, .choice:hover, .package:hover, .extra:hover, .quick-distro:hover { border-color: var(--input-line); }
 .distro:has(:checked), .choice:has(:checked), .package:has(:checked), .extra:has(:checked) { border-color: var(--accent); background: var(--wash); }

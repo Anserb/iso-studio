@@ -83,6 +83,9 @@ export function buildArch({ name, kernel, desktop, language, keyboard, packages 
   const localeDefinitions = language === 'en_US.UTF-8'
     ? 'en_US.UTF-8 UTF-8'
     : `en_US.UTF-8 UTF-8\n${language} UTF-8`;
+  const enableMultilib = packages.includes('steam')
+    ? `sed -i '/^#\\[multilib\\]/,/^#Include = \\/etc\\/pacman.d\\/mirrorlist/s/^#//' profile/pacman.conf\ngrep -Fxq '[multilib]' profile/pacman.conf`
+    : '';
   const graphicalSetup = withDesktop ? `
 printf '%s\\n' xorg-server xfce4 lightdm lightdm-gtk-greeter mesa >> profile/packages.x86_64
 mkdir -p "$target/etc/sysusers.d" "$target/etc/tmpfiles.d" \\
@@ -131,6 +134,7 @@ cat > "$target/etc/locale.gen" <<'LOCALES'
 ${localeDefinitions}
 LOCALES
 printf '%s\\n' 'KEYMAP=${keyboard === 'gr' ? 'gr' : 'us'}' > "$target/etc/vconsole.conf"
+${enableMultilib}
 ${graphicalSetup}${packages.length ? `printf '%s\\n' ${packages.join(' ')} >> profile/packages.x86_64\n` : ''}
 sort -u -o profile/packages.x86_64 profile/packages.x86_64
 as_root /bin/bash -euo pipefail <<'BUILD_ARCH'
