@@ -1,138 +1,202 @@
 const canvas = document.querySelector('#terrain');
-const context = canvas?.getContext('2d');
+const ctx = canvas.getContext('2d');
+const motion = document.querySelector('#motion');
+const preference = matchMedia('(prefers-reduced-motion: reduce)');
+let paused = preference.matches;
+let frame = 0;
 let width = 0;
 let height = 0;
-let frame = 0;
+let seconds = 0;
+let previous = 0;
+let pointer = 0;
+let camera = 0;
+const stars = Array.from({ length: 68 }, (_, index) => [
+  (index * 0.61803398875) % 1,
+  (index * 0.41421356237) % 1,
+]);
 
-function resizeTerrain() {
-  if (!canvas || !context) return;
-  const ratio = Math.min(devicePixelRatio || 1, 2);
+function draw(now) {
+  if (!ctx) return;
+  if (!paused && previous) seconds += Math.min((now - previous) / 1000, 0.05);
+  previous = now;
+  camera += (pointer - camera) * 0.045;
+  ctx.clearRect(0, 0, width, height);
+  const glow = ctx.createRadialGradient(width * .76 + camera * 32, height * .57, 0, width * .76, height * .57, width * .62);
+  glow.addColorStop(0, '#386a3e');
+  glow.addColorStop(.4, '#153c2d');
+  glow.addColorStop(1, '#071512');
+  ctx.fillStyle = glow;
+  ctx.fillRect(0, 0, width, height);
+  for (const [x, y] of stars) {
+    ctx.fillStyle = `rgba(178,255,165,${.12 + .18 * (1 + Math.sin(seconds * 1.2 + x * 52))})`;
+    ctx.fillRect(x * width, y * height * .67, 1.5, 1.5);
+  }
+  const columns = 39;
+  const rows = 32;
+  const points = Array.from({ length: rows }, (_, row) => {
+    const depth = row / (rows - 1);
+    const scale = .28 + depth * 1.16;
+    return Array.from({ length: columns }, (_, col) => {
+      const across = col / (columns - 1) - .5;
+      const wave = Math.sin(across * 11 + depth * 7 - seconds * .67)
+        + .46 * Math.cos(across * 23 - depth * 10 + seconds * .84);
+      return [
+        width * .67 + across * width * 1.63 * scale + camera * (35 - 30 * depth),
+        height * (.46 + depth ** 1.7 * .72) + wave * height * (.018 + depth * .038),
+      ];
+    });
+  });
+  for (const [row, line] of points.entries()) {
+    ctx.beginPath();
+    line.forEach(([x, y], col) => col ? ctx.lineTo(x, y) : ctx.moveTo(x, y));
+    ctx.strokeStyle = `rgba(143,246,108,${.13 + row * .005})`;
+    ctx.stroke();
+  }
+  ctx.beginPath();
+  for (let col = 0; col < columns; col++) {
+    points.forEach((line, row) => row ? ctx.lineTo(...line[col]) : ctx.moveTo(...line[col]));
+  }
+  ctx.strokeStyle = '#81ee6737';
+  ctx.stroke();
+  const shade = ctx.createLinearGradient(0, 0, width, 0);
+  shade.addColorStop(0, '#071512ed');
+  shade.addColorStop(.6, '#07151244');
+  shade.addColorStop(1, '#07151210');
+  ctx.fillStyle = shade;
+  ctx.fillRect(0, 0, width, height);
+  if (!paused && !document.hidden) frame = requestAnimationFrame(draw);
+}
+
+function restart() {
+  cancelAnimationFrame(frame);
+  previous = 0;
+  draw(performance.now());
+}
+
+function resize() {
+  if (!ctx) return;
   width = innerWidth;
   height = innerHeight;
-  canvas.width = Math.floor(width * ratio);
-  canvas.height = Math.floor(height * ratio);
-  canvas.style.width = `${width}px`;
-  canvas.style.height = `${height}px`;
-  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  const ratio = Math.min(devicePixelRatio || 1, 2);
+  canvas.width = width * ratio;
+  canvas.height = height * ratio;
+  ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+  restart();
 }
 
-function drawTerrain() {
-  if (!canvas || !context || document.documentElement.classList.contains('paused')) {
-	if (!document.documentElement.classList.contains('paused')) requestAnimationFrame(drawTerrain);
-	return;
-  }
-  context.clearRect(0, 0, width, height);
-  context.strokeStyle = 'rgba(168,255,104,.055)';
-  context.lineWidth = 1;
-  const spacing = 44;
-  const offset = (frame * 0.12) % spacing;
-  for (let x = -height; x < width + height; x += spacing) {
-	context.beginPath();
-	context.moveTo(x - offset, height);
-	context.quadraticCurveTo(width * 0.68 + Math.sin(frame * 0.008) * 70, height * 0.42, x + height * 0.2, 0);
-	context.stroke();
-  }
-  for (let y = 40; y < height; y += spacing) {
-	context.beginPath();
-	context.moveTo(0, y + Math.sin(frame * 0.006 + y) * 2);
-	for (let x = 0; x <= width; x += 24) {
-	  context.lineTo(x, y + Math.sin(x * 0.008 + frame * 0.012 + y * 0.01) * 3);
-	}
-	context.stroke();
-  }
-  frame++;
-  requestAnimationFrame(drawTerrain);
+function syncMotion() {
+  document.documentElement.classList.toggle('paused', paused);
+  document.documentElement.classList.toggle('motion-enabled', !paused);
+  motion.setAttribute('aria-pressed', String(paused));
+  motion.textContent = paused ? 'Συνέχιση κίνησης' : 'Παύση κίνησης';
+  restart();
 }
 
-resizeTerrain();
-addEventListener('resize', resizeTerrain);
-if (!matchMedia('(prefers-reduced-motion: reduce)').matches) drawTerrain();
-
-const motionButton = document.querySelector('#motion');
-motionButton?.addEventListener('click', () => {
-  const paused = document.documentElement.classList.toggle('paused');
-  motionButton.setAttribute('aria-pressed', String(paused));
-  motionButton.textContent = paused ? 'Συνέχεια κίνησης' : 'Παύση κίνησης';
-  if (!paused && context) {
-	frame = 0;
-	drawTerrain();
-  }
+motion.addEventListener('click', () => {
+  paused = !paused;
+  syncMotion();
 });
+preference.addEventListener('change', event => {
+  paused = event.matches;
+  syncMotion();
+});
+addEventListener('resize', resize);
+addEventListener('pointermove', event => { pointer = event.clientX / innerWidth - .5; });
+document.addEventListener('visibilitychange', restart);
+resize();
+syncMotion();
 
-const observer = 'IntersectionObserver' in window
-  ? new IntersectionObserver(entries => {
-	  entries.forEach(entry => {
-		if (entry.isIntersecting) {
-		  entry.target.classList.add('in-view');
-		  observer.unobserve(entry.target);
-		}
-	  });
-	}, { threshold: 0.12 })
-  : null;
-document.querySelectorAll('.reveal').forEach(element => observer?.observe(element) || element.classList.add('in-view'));
-
-const distroOptions = {
-  'debian-13': { kernels: ['standard', 'real-time'], desktops: ['xfce', 'gnome', 'plasma', 'terminal'] },
-  'ubuntu-24.04': { kernels: ['generic', 'hwe', 'low-latency'], desktops: ['xfce', 'gnome', 'plasma', 'terminal'] },
-  'arch': { kernels: ['standard', 'lts', 'zen', 'hardened'], desktops: ['xfce', 'terminal'] },
-  'fedora-44': { kernels: ['standard', 'debug'], desktops: ['xfce', 'gnome', 'plasma', 'terminal'] },
-};
-
-const distroSelect = document.querySelector('#distro');
-const kernelSelect = document.querySelector('#kernel');
-const desktopSelect = document.querySelector('#desktop');
-const recipe = document.querySelector('#recipe');
-
-function replaceOptions(select, values) {
-  if (!select) return;
-  select.replaceChildren(...values.map(value => new Option(value.replace(/-/g, ' '), value)));
+if ('IntersectionObserver' in window) {
+  const observer = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      if (!entry.isIntersecting) continue;
+      entry.target.classList.add('in-view');
+      observer.unobserve(entry.target);
+    }
+  }, { threshold: .12 });
+  document.querySelectorAll('.reveal').forEach(element => observer.observe(element));
 }
 
-function updateLab(distro) {
-  const selection = distroOptions[distro];
-  if (!selection) return;
-  if (distroSelect) distroSelect.value = distro;
-  replaceOptions(kernelSelect, selection.kernels);
-  replaceOptions(desktopSelect, selection.desktops);
-  updateRecipe();
+const kernels = {
+  'debian-13': [['standard', 'Standard'], ['real-time', 'Real-time']],
+  'ubuntu-24.04': [['generic', 'Generic'], ['hwe', 'HWE'], ['low-latency', 'Low-latency']],
+  arch: [['standard', 'Standard'], ['lts', 'LTS'], ['zen', 'Zen'], ['hardened', 'Hardened']],
+  'fedora-44': [['standard', 'Standard'], ['debug', 'Debug']],
+};
+const desktops = [['xfce', 'Xfce'], ['gnome', 'GNOME'], ['plasma', 'KDE Plasma'], ['terminal', 'Τερματικό']];
+const distro = document.querySelector('#distro');
+const kernel = document.querySelector('#kernel');
+const desktop = document.querySelector('#desktop');
+const recipe = document.querySelector('#recipe');
+const status = document.querySelector('#copy-status');
+
+function setOptions(select, options) {
+  const selected = select.value;
+  select.replaceChildren(...options.map(([value, label]) => new Option(label, value)));
+  if (options.some(([value]) => value === selected)) select.value = selected;
 }
 
 function updateRecipe() {
-  if (!distroSelect || !kernelSelect || !desktopSelect || !recipe) return;
-  const text = `distro: ${distroSelect.value}\nkernel: ${kernelSelect.value}\ndesktop: ${desktopSelect.value}\narchitecture: x86_64\noutput: live.iso`;
-  recipe.textContent = text;
-  document.querySelector('#hero-distro')?.replaceChildren(document.createTextNode(distroSelect.value));
-  document.querySelector('#hero-kernel')?.replaceChildren(document.createTextNode(kernelSelect.value));
-  document.querySelector('#hero-desktop')?.replaceChildren(document.createTextNode(desktopSelect.value));
+  recipe.textContent = [
+    `distro: ${distro.value}`,
+    `kernel: ${kernel.value}`,
+    `desktop: ${desktop.value}`,
+    'architecture: x86_64',
+    'output: live.iso',
+  ].join('\n');
+  for (const select of [distro, kernel, desktop]) {
+    document.querySelector(`#hero-${select.id}`).textContent = select.value;
+  }
+  recipe.classList.remove('changed');
+  requestAnimationFrame(() => recipe.classList.add('changed'));
+  status.textContent = '';
 }
 
-distroSelect?.addEventListener('change', () => updateLab(distroSelect.value));
-kernelSelect?.addEventListener('change', updateRecipe);
-desktopSelect?.addEventListener('change', updateRecipe);
+function updateDistro() {
+  setOptions(kernel, kernels[distro.value]);
+  setOptions(desktop, distro.value === 'arch' ? [desktops[0], desktops[3]] : desktops);
+  updateRecipe();
+}
 
+distro.addEventListener('change', updateDistro);
 document.querySelectorAll('[data-demo-distro]').forEach(link => {
-  link.addEventListener('click', () => updateLab(link.dataset.demoDistro));
+  link.addEventListener('click', () => {
+    distro.value = link.dataset.demoDistro;
+    updateDistro();
+    distro.focus({ preventScroll: true });
+  });
 });
-
-document.querySelector('#copy')?.addEventListener('click', async () => {
-  const status = document.querySelector('#copy-status');
+kernel.addEventListener('change', updateRecipe);
+desktop.addEventListener('change', updateRecipe);
+document.querySelector('#copy').addEventListener('click', async () => {
   try {
-	await navigator.clipboard.writeText(recipe?.textContent || '');
-	if (status) status.textContent = 'Το live.recipe αντιγράφηκε.';
+    await navigator.clipboard.writeText(recipe.textContent);
+    status.textContent = 'Η σύνοψη αντιγράφηκε.';
   } catch {
-	if (status) status.textContent = 'Δεν ήταν δυνατή η αντιγραφή.';
+    const range = document.createRange();
+    range.selectNodeContents(recipe);
+    const selection = window.getSelection();
+    selection.removeAllRanges();
+    selection.addRange(range);
+    status.textContent = 'Η σύνοψη επιλέχθηκε. Πάτησε Ctrl+C ή ⌘C.';
   }
 });
 
-document.querySelector('#support-form')?.addEventListener('submit', event => {
+const support = document.querySelector('#support-form');
+const message = document.querySelector('#support-message');
+message.addEventListener('input', () => message.setCustomValidity(''));
+support.addEventListener('submit', event => {
   event.preventDefault();
-  const form = new FormData(event.currentTarget);
-  const topic = form.get('topic');
-  const system = String(form.get('system') || '').trim();
-  const message = String(form.get('message') || '').trim();
-  const subject = encodeURIComponent(`Linux Studio support: ${topic}`);
-  const body = encodeURIComponent(`Θέμα: ${topic}\nΛειτουργικό/διανομή: ${system || 'Δεν δόθηκε'}\n\n${message}`);
-  location.href = `mailto:billpirgopoulos1@gmail.com?subject=${subject}&body=${body}`;
+  const fields = new FormData(support);
+  const details = fields.get('message').trim();
+  if (!details) {
+    message.setCustomValidity('Γράψε ένα μήνυμα για την υποστήριξη.');
+    message.reportValidity();
+    return;
+  }
+  const subject = `Linux Studio — ${fields.get('topic')}`;
+  const system = fields.get('system').trim();
+  const body = system ? `Λειτουργικό / διανομή: ${system}\r\n\r\n${details}` : details;
+  const address = document.querySelector('#support-email').getAttribute('href');
+  window.location.href = `${address}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body.replace(/\r?\n/g, '\r\n'))}`;
 });
-
-updateRecipe();

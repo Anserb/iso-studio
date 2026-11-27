@@ -1,35 +1,101 @@
-const iframe = document.querySelector('#desktop-preview');
-const status = document.querySelector('#preview-status');
+const frame = document.querySelector('#desktop-preview');
+const indicator = document.querySelector('#preview-status');
+const repository = 'https://api.github.com/repos/Anserb/iso-studio';
+const raw = 'https://raw.githubusercontent.com/Anserb/iso-studio/';
+const fileNames = ['index.html', 'style.css', 'app.mjs', 'catalog.mjs', 'app-library.mjs', 'linux-apps.mjs'];
+
+async function loadFiles(base, signal) {
+  const files = await Promise.all(fileNames.map(async name => {
+    const response = await fetch(base + name, { signal });
+    if (!response.ok) throw new Error('Could not load ' + name);
+    return [name, await response.text()];
+  }));
+  return Object.fromEntries(files);
+}
 
 async function latestRelease() {
-  try {
-	const response = await fetch('https://api.github.com/repos/Anserb/iso-studio/releases/latest', {
-	  headers: { Accept: 'application/vnd.github+json' },
-	});
-	if (!response.ok) throw new Error('release unavailable');
-	const release = await response.json();
-	return String(release.tag_name || '').replace(/^v/, '');
-  } catch {
-	return '0.8.0';
+  const signal = AbortSignal.timeout(6500);
+  const response = await fetch(repository + '/releases/latest', { cache: 'no-cache', signal });
+  if (!response.ok) throw new Error('Release metadata unavailable');
+  const { tag_name: tag } = await response.json();
+  if (!/^v?\d+\.\d+\.\d+[-.a-zA-Z0-9]*$/.test(tag)) throw new Error('Unexpected release tag');
+  return { tag, files: await loadFiles(raw + encodeURIComponent(tag) + '/', signal) };
+}
+
+// Keep the desktop UI's local API contract inside the sandboxed preview.
+function previewApi() {
+  const note = 'Για αυτή τη λειτουργία, άνοιξε το Linux Studio στον υπολογιστή σου.';
+  let theme = 'dark';
+  window.fetch = async (path, options = {}) => {
+    const method = options.method ?? 'GET';
+    if (path === '/api/appearance') {
+      if (method === 'POST') {
+        theme = JSON.parse(options.body).theme === 'light' ? 'light' : 'dark';
+      }
+      return Response.json({ theme });
+    }
+    if (path === '/api/status' && method === 'GET') {
+      const statuses = Object.fromEntries(['debian', 'ubuntu', 'arch', 'fedora'].map(id => [
+        id, { available: false, setup: false, message: note },
+      ]));
+      return Response.json({ statuses });
+    }
+    if (path === '/api/apps/status' && method === 'GET') {
+      return Response.json({ canInstall: false, installed: [], distro: 'Προεπισκόπηση εφαρμογών Linux', message: note });
+    }
+    if (path === '/api/update' && method === 'GET' || path === '/api/update/check' && method === 'POST') {
+      return Response.json({ status: 'current', canInstall: false });
+    }
+    return Response.json({ error: note }, { status: 403 });
+  };
+  // A fragment in srcdoc otherwise resolves against the embedding page's URL.
+  document.addEventListener('click', event => {
+    const link = event.target.closest('a[href^="#"]');
+    if (!link) return;
+    event.preventDefault();
+    location.hash = link.getAttribute('href');
+  });
+}
+
+function makeDocument(files) {
+  const { 'index.html': html, 'style.css': css, ...modules } = files;
+  const styleTag = /<link\b[^>]*href="\/style\.css"[^>]*>/;
+  const moduleTag = /<script\b[^>]*src="\/app\.mjs"[^>]*><\/script>/;
+  if (!styleTag.test(html) || !moduleTag.test(html) || !/<head>/i.test(html)) {
+    throw new Error('Unsupported desktop preview layout');
   }
+  const imports = Object.fromEntries(Object.entries(modules).map(([name, source]) => {
+    const rewritten = source.replace(/(\bfrom\s*['"])\.\/([\w.-]+\.mjs)(['"])/g, (match, start, dependency, end) => {
+      if (!Object.hasOwn(modules, dependency)) throw new Error('New desktop dependency: ' + dependency);
+      return start + 'desktop/' + dependency + end;
+    });
+    return ['desktop/' + name, 'data:text/javascript;charset=utf-8,' + encodeURIComponent(rewritten)];
+  }));
+  const policy = "default-src 'none'; script-src 'unsafe-inline' data:; style-src 'unsafe-inline'; img-src data:; base-uri 'none'; form-action 'none'";
+  const scripts = '<script>(' + previewApi.toString() + ')()</script>'
+    + '<script type="importmap">' + JSON.stringify({ imports }) + '</script>'
+    + '<script type="module">import "desktop/app.mjs";</script>';
+  return html
+    .replace(/<head>/i, head => head + '<meta http-equiv="Content-Security-Policy" content="' + policy + '">')
+    .replace(styleTag, () => '<style>' + css.replace(/<\/style/gi, '<\\/style') + '</style>')
+    .replace(moduleTag, () => scripts);
 }
 
-function previewMarkup(version) {
-  return `<!doctype html><html lang="el"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><style>
-*{box-sizing:border-box}body{margin:0;font:12px/1.45 Inter,system-ui,sans-serif;background:#10191e;color:#edf6f0}.app{display:grid;grid-template-columns:190px 1fr;min-height:620px}.side{padding:18px 12px;background:#09140f;border-right:1px solid #294139}.brand{display:flex;gap:7px;align-items:center;font-weight:800;margin-bottom:22px}.brand i{display:grid;place-items:center;width:28px;height:28px;border-radius:6px;background:#a8ff68;color:#092014;font-style:normal}.nav button{display:block;width:100%;margin:5px 0;padding:10px;border:0;border-radius:6px;text-align:left;color:#9eb2a6;background:transparent}.nav button.active{color:#efffee;background:#1a3327}.main{min-width:0}.top{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 18px;border-bottom:1px solid #294139}.top small{color:#91a89b}.bar{display:grid;grid-template-columns:repeat(6,1fr);border-bottom:1px solid #294139}.bar button{height:38px;border:0;border-right:1px solid #294139;color:#91a89b;background:#0d1713}.bar button:last-child{border-right:0}.bar button.active{color:#a8ff68;background:#16271f}.workspace{display:grid;grid-template-columns:minmax(0,1fr) 280px;gap:14px;padding:16px}.panel{padding:16px;border:1px solid #294139;border-radius:8px;background:#0d1713}.panel h2{margin:0 0 14px;font-size:20px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.grid label{color:#9eb2a6}.grid select{display:block;width:100%;margin-top:5px;padding:9px;border:1px solid #294139;border-radius:5px;color:#edf6f0;background:#102019}.summary{border:1px solid #294139;border-radius:8px;padding:14px;background:#09130f}.summary small{color:#7e9b8d}.summary pre{min-height:220px;white-space:pre-wrap;color:#baf0bd;font:10px/1.8 ui-monospace,monospace}.next{width:100%;padding:10px;border:0;border-radius:5px;background:#a8ff68;color:#092014;font-weight:700}.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.card{padding:12px;border:1px solid #294139;border-radius:7px;background:#0d1713}.card b{display:inline-block;margin-right:7px;color:#a8ff68}.profiles{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.profile{min-height:100px;padding:12px;border:1px solid #294139;border-radius:7px}.hidden{display:none!important}@media(max-width:700px){.app{grid-template-columns:56px 1fr}.side{padding:12px 7px}.brand span,.nav button span{display:none}.nav button{height:38px;text-align:center}.workspace{grid-template-columns:1fr}.summary{display:none}.top small{display:none}.bar button{font-size:0}.grid{grid-template-columns:1fr}.cards,.profiles{grid-template-columns:1fr 1fr}}
-</style></head><body><div class="app"><aside class="side"><div class="brand"><i>&gt;_</i><span>Linux Studio</span></div><div class="nav"><button class="active" data-view="iso"><span>◉ Εργαστήριο ISO</span></button><button data-view="apps"><span>⊞ Εφαρμογές Linux</span></button><button data-view="profiles"><span>◇ Τα προφίλ μου</span></button></div></aside><main class="main"><div class="top"><strong id="title">Δημιουργία Linux ISO</strong><small>Linux Studio ${version} · x86-64</small></div><section id="iso"><div class="bar"><button class="active" data-step="0">1 Διανομή</button><button data-step="1">2 Περιβάλλον</button><button data-step="2">3 Γλώσσα</button><button data-step="3">4 Εφαρμογές</button><button data-step="4">5 Εγκατάσταση</button><button data-step="5">6 Σύνοψη</button></div><div class="workspace"><div class="panel"><h2 id="stepTitle">Βάση του ISO</h2><div class="grid"><label>Διανομή<select id="distro"><option value="debian">Debian 13</option><option value="ubuntu">Ubuntu 24.04 LTS</option><option value="arch">Arch Linux</option><option value="fedora">Fedora 44</option></select></label><label>Kernel<select id="kernel"></select></label><label>Desktop<select id="desktop"></select></label><label>Όνομα<input id="name" value="my-linux" style="display:block;width:100%;margin-top:5px;padding:9px;border:1px solid #294139;border-radius:5px;color:#edf6f0;background:#102019"></label></div></div><aside class="summary"><small>LIVE RECIPE</small><pre id="recipe"></pre><button class="next" id="next">Συνέχεια →</button></aside></div></section><section id="apps" class="hidden" style="padding:16px"><h2>Εφαρμογές Linux</h2><div class="cards"><div class="card"><b>◎</b>LibreOffice</div><div class="card"><b>▶</b>VLC</div><div class="card"><b>⌨</b>VS Code</div><div class="card"><b>◆</b>Blender</div><div class="card"><b>⌁</b>Firefox</div><div class="card"><b>⚙</b>Steam</div></div></section><section id="profiles" class="hidden" style="padding:16px"><h2>Τα προφίλ μου</h2><div class="profiles"><div class="profile"><strong>Gaming Debian</strong><p>Xfce · Nord</p></div><div class="profile"><strong>Creator Arch</strong><p>Zen kernel · Xfce</p></div><div class="profile"><strong>My Linux</strong><p>+ Νέο προφίλ</p></div></div></section></main></div><script>
-const choices={debian:['Standard','Real-time','Xfce','GNOME','KDE Plasma','Τερματικό'],ubuntu:['Generic','HWE','Low-latency','Xfce','GNOME','KDE Plasma','Τερματικό'],arch:['Standard','LTS','Zen','Hardened','Xfce','Τερματικό'],fedora:['Standard','Debug','Xfce','GNOME','KDE Plasma','Τερματικό']};
-const distro=document.querySelector('#distro'),kernel=document.querySelector('#kernel'),desktop=document.querySelector('#desktop'),name=document.querySelector('#name'),recipe=document.querySelector('#recipe');
-function update(){const id=distro.value,k=choices[id].slice(0,id==='arch'?4:id==='debian'||id==='fedora'?2:id==='ubuntu'?3:2),d=choices[id].slice(k.length);kernel.replaceChildren(...k.map(v=>new Option(v,v)));desktop.replaceChildren(...d.map(v=>new Option(v,v)));recipe.textContent='distro: '+id+'\nkernel: '+kernel.value+'\ndesktop: '+desktop.value+'\nname: '+name.value+'\narchitecture: x86_64\noutput: live.iso'}
-distro.onchange=update;kernel.onchange=update;desktop.onchange=update;name.oninput=update;update();
-document.querySelectorAll('[data-view]').forEach(b=>b.onclick=()=>{document.querySelectorAll('[data-view]').forEach(x=>x.classList.remove('active'));b.classList.add('active');['iso','apps','profiles'].forEach(v=>document.querySelector('#'+v).classList.toggle('hidden',b.dataset.view!==v));document.querySelector('#title').textContent=b.dataset.view==='iso'?'Δημιουργία Linux ISO':b.dataset.view==='apps'?'Εφαρμογές Linux':'Τα προφίλ μου'});
-const titles=['Βάση του ISO','Επιφάνεια εργασίας','Γλώσσα και πληκτρολόγιο','Εφαρμογές','Εγκατάσταση','Σύνοψη'];let step=0;document.querySelectorAll('[data-step]').forEach(b=>b.onclick=()=>{step=Number(b.dataset.step);document.querySelectorAll('[data-step]').forEach(x=>x.classList.toggle('active',Number(x.dataset.step)==step));document.querySelector('#stepTitle').textContent=titles[step]});document.querySelector('#next').onclick=()=>{step=(step+1)%6;document.querySelectorAll('[data-step]').forEach(x=>x.classList.toggle('active',Number(x.dataset.step)==step));document.querySelector('#stepTitle').textContent=titles[step]};
-</script></body></html>`;
+async function openPreview() {
+  try {
+    const { tag, files } = await latestRelease();
+    frame.srcdoc = makeDocument(files);
+    indicator.textContent = 'Έκδοση ' + tag + ' · Από την τελευταία σταθερή έκδοση στο GitHub';
+  } catch {
+    try {
+      frame.srcdoc = makeDocument(await loadFiles('./desktop/', AbortSignal.timeout(6500)));
+      indicator.textContent = 'Ενσωματωμένη έκδοση · Ο συγχρονισμός με το GitHub δεν είναι διαθέσιμος αυτή τη στιγμή';
+    } catch {
+      indicator.textContent = 'Η προεπισκόπηση δεν φορτώθηκε. Δοκίμασε να ανανεώσεις τη σελίδα.';
+      return;
+    }
+  }
+  frame.hidden = false;
 }
 
-const version = await latestRelease();
-if (iframe && status) {
-  iframe.srcdoc = previewMarkup(version);
-  iframe.hidden = false;
-  status.textContent = `Το demo ελέγχει την τελευταία έκδοση · GitHub: v${version}`;
-}
+void openPreview();
