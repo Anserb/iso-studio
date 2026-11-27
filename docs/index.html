@@ -1,219 +1,113 @@
-<!DOCTYPE html>
-<html lang="en" class="scroll-smooth">
+<!doctype html>
+<html lang="el">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Linux Studio - Build Your Custom OS</title>
-    <!-- Fonts: Inter for UI, Fira Code for Terminal -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
-    <link rel="canonical" href="https://linuxstudio.pvgaming.uk/">
-    <link rel="stylesheet" href="./landing.css">
-    <style>
-        body {
-            background-color: #050505;
-            color: #ffffff;
-            overflow-x: hidden;
-        }
-
-        /* Custom scrollbar for the terminal */
-        .terminal-scroll::-webkit-scrollbar {
-            width: 8px;
-        }
-        .terminal-scroll::-webkit-scrollbar-track {
-            background: rgba(255, 255, 255, 0.05);
-            border-radius: 4px;
-        }
-        .terminal-scroll::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.2);
-            border-radius: 4px;
-        }
-
-        /* Glow effects */
-        .glow-border {
-            position: relative;
-        }
-        .glow-border::before {
-            content: "";
-            position: absolute;
-            inset: -1px;
-            border-radius: inherit;
-            padding: 1px;
-            background: linear-gradient(to bottom right, rgba(16, 185, 129, 0.5), rgba(6, 182, 212, 0.1), transparent);
-            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-            -webkit-mask-composite: xor;
-            mask-composite: exclude;
-            pointer-events: none;
-        }
-
-        .card-hover:hover {
-            box-shadow: 0 0 30px rgba(16, 185, 129, 0.15);
-            transform: translateY(-2px);
-        }
-
-        @media (prefers-reduced-motion: reduce) {
-            .animate-pulse { animation: none; }
-            .scroll-smooth { scroll-behavior: auto; }
-        }
-    </style>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#090f11">
+  <meta name="description" content="Το Linux στα μέτρα σου. Διάλεξε διανομή, kernel, desktop και εφαρμογές. Δημιούργησε τη δική σου εικόνα Linux Live με το Linux Studio.">
+  <title>Linux Studio — Το Linux, όπως το φαντάζεσαι.</title>
+  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="./images/aurora-mountains.jpg">
+  <link rel="stylesheet" href="./home.css">
+  <script src="./home.js" defer></script>
 </head>
-<body class="antialiased selection:bg-accent selection:text-white relative">
-
-    <!-- Ambient Background Glows -->
-    <div class="absolute inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        <div class="absolute top-[-10%] left-[20%] w-[600px] h-[600px] bg-emerald-600/10 blur-[120px] rounded-full mix-blend-screen"></div>
-        <div class="absolute top-[40%] right-[-10%] w-[500px] h-[500px] bg-cyan-600/10 blur-[120px] rounded-full mix-blend-screen"></div>
+<body>
+  <a class="skip-link" href="#main">Μετάβαση στο περιεχόμενο</a>
+  <div class="scroll-progress" aria-hidden="true"></div>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="logo" href="./" aria-label="Linux Studio, αρχική"><span class="logo-icon" aria-hidden="true">›_</span>Linux<span class="logo-light">Studio</span></a>
+      <nav class="desktop-nav" aria-label="Κύρια πλοήγηση">
+        <a href="#explore">Διανομές</a><a href="#how-it-works">Πώς λειτουργεί</a><a href="./guide.html">Οδηγός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a>
+      </nav>
+      <div class="nav-actions"><a class="login-link" href="./account.html">Σύνδεση</a><a class="button button-small" href="./download.html">Λήψη <span aria-hidden="true">↗</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="Μενού">☰</button></div>
     </div>
+    <nav id="mobile-menu" class="mobile-menu container" aria-label="Πλοήγηση κινητού" hidden><a href="#explore">Διανομές</a><a href="#how-it-works">Πώς λειτουργεί</a><a href="./guide.html">Οδηγός</a><a href="./account.html">Λογαριασμός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a></nav>
+  </header>
+  <main id="main">
+    <section class="hero" aria-labelledby="hero-heading">
+      <img class="hero-image" src="./images/aurora-mountains.jpg" alt="" width="2200" height="1467" fetchpriority="high">
+      <div class="hero-shade"></div>
+      <div class="container hero-content">
+        <p class="eyebrow hero-enter"><span class="status-light"></span> OPEN SOURCE. OPEN POSSIBILITIES.</p>
+        <h1 id="hero-heading" class="hero-enter">Το Linux,<br>όπως το<br><em>φαντάζεσαι.</em></h1>
+        <p class="hero-description hero-enter">Η διανομή σου. Ο kernel σου. Το desktop σου.<br>Φτιάξε μια εικόνα Linux Live που ξεκινά<br class="wide-only"> από τις δικές σου επιλογές.</p>
+        <div class="hero-actions hero-enter"><a class="button" href="./download.html">Κατέβασε το Linux Studio <span aria-hidden="true">↗</span></a><a class="text-button" href="#how-it-works">Δες πώς λειτουργεί <span aria-hidden="true">↓</span></a></div>
+        <p class="hero-note hero-enter">Για Windows &amp; Linux <span>·</span> Ελεύθερο λογισμικό, με άδεια MIT</p>
+      </div>
+      <div class="hero-caption" aria-hidden="true"><span>YOUR SYSTEM.<br>YOUR DIRECTION.</span><span class="compass">↗</span></div>
+      <div class="hero-bottom container"><a href="#explore"><span class="scroll-arrow" aria-hidden="true">↓</span> Εξερεύνησε τις δυνατότητες</a><span>LINUX STUDIO / CUSTOM LIVE IMAGES</span></div>
+    </section>
+    <div class="distribution-strip"><div class="container"><span>Ξεκίνα από τη βάση σου</span><a href="#explore" data-choose="debian">Debian <i aria-hidden="true">↗</i></a><a href="#explore" data-choose="ubuntu">Ubuntu <i aria-hidden="true">↗</i></a><a href="#explore" data-choose="arch">Arch Linux <i aria-hidden="true">↗</i></a><a href="#explore" data-choose="fedora">Fedora <i aria-hidden="true">↗</i></a></div></div>
 
-    <!-- Navigation -->
-    <nav class="fixed top-0 w-full z-50 bg-background/70 backdrop-blur-lg border-b border-white/10 transition-all duration-300">
-        <div class="max-w-7xl mx-auto px-3 sm:px-6 h-16 flex items-center justify-between gap-3">
-            <!-- Logo -->
-            <a href="./" class="flex items-center gap-2">
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400 to-cyan-600 flex items-center justify-center shadow-[0_0_15px_rgba(16,185,129,0.5)]">
-                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M4 17h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                </div>
-                <span class="font-bold tracking-tight text-sm sm:text-lg whitespace-nowrap">Linux Studio</span>
-            </a>
-
-            <!-- Desktop Links -->
-            <div class="hidden md:flex items-center gap-8 text-sm font-medium text-gray-400">
-                <a href="./features.html" class="hover:text-white transition-colors">Features</a>
-                <a href="./guide.html" class="hover:text-white transition-colors">Documentation</a>
-                <a href="https://github.com/Anserb/iso-studio/issues" class="hover:text-white transition-colors">Community</a>
-            </div>
-
-            <!-- CTA -->
-            <div class="flex items-center gap-2 sm:gap-4">
-                <a href="./account.html" class="text-sm font-medium text-gray-400 hover:text-white transition-colors">Sign in</a>
-                <a href="./download.html" class="bg-white/10 hover:bg-white/20 text-white text-sm font-medium px-4 py-2 rounded-md border border-white/10 transition-all">
-                    Get Started
-                </a>
-            </div>
-        </div>
-    </nav>
-
-    <!-- Hero Section -->
-    <main class="pt-32 pb-20 px-6 relative z-10">
-        <div class="max-w-5xl mx-auto text-center">
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-medium mb-8">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                Version 0.4.0 · Open source
-            </div>
-
-            <h1 class="text-5xl md:text-7xl font-bold tracking-tighter mb-6">
-                Build Your <br class="hidden md:block" />
-                <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-cyan-400 to-emerald-300">Custom Linux.</span>
-            </h1>
-
-            <p class="text-lg md:text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
-                Choose your distribution, kernel, desktop, and apps. Build a custom Linux Live image with the options you pick.
-            </p>
-
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="./download.html" class="w-full sm:w-auto px-8 py-3 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-black font-semibold shadow-[0_0_20px_rgba(16,185,129,0.4)] hover:shadow-[0_0_30px_rgba(16,185,129,0.6)] transition-all transform hover:-translate-y-0.5">
-                    Start Building Now
-                </a>
-                <a href="./guide.html" class="w-full sm:w-auto px-8 py-3 rounded-lg bg-surfaceLight hover:bg-white/10 text-white font-medium border border-white/10 transition-all flex items-center justify-center gap-2">
-                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path></svg>
-                    View Documentation
-                </a>
-            </div>
-        </div>
-
-        <!-- Terminal Window Mockup -->
-        <div class="mt-20 max-w-4xl mx-auto glow-border rounded-xl bg-[#0a0a0a] shadow-2xl">
-            <!-- Terminal Header -->
-            <div class="flex items-center px-4 py-3 bg-[#111] rounded-t-xl border-b border-white/10">
-                <div class="flex gap-2">
-                    <div class="w-3 h-3 rounded-full bg-red-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-yellow-500/80"></div>
-                    <div class="w-3 h-3 rounded-full bg-green-500/80"></div>
-                </div>
-                <div class="mx-auto text-xs text-gray-500 font-mono">linux-studio:~ · example</div>
-            </div>
-            <!-- Terminal Body -->
-            <div class="p-6 h-[320px] overflow-y-auto terminal-scroll font-mono text-sm leading-relaxed" id="terminal-body">
-                <div class="text-emerald-400 mb-4">
-                    _ _                   _____ _             _ <br>
-                    | (_)_ __  _   ___  __ / ___| |_ _   _  __| (_) ___<br>
-                    | | | '_ \| | | \ \/ / \___ \ __| | | |/ _` | |/ _ \<br>
-                    | | | | | | |_| |>  <   ___) | |_| |_| | (_| | | (_) |<br>
-                    |_|_|_| |_|\__,_/_/\_\ |____/ \__|\__,_|\__,_|_|\___/<br>
-                </div>
-                <div class="text-gray-400 mb-2">Example workflow · Debian 13 Live ISO</div>
-                <div class="flex items-center text-gray-300">
-                    <span class="text-emerald-400 mr-2">➜</span>
-                    <span class="text-cyan-400 mr-2">~</span>
-                    <span id="typewriter" class="break-all">Debian 13 · Xfce · my-linux-debian-amd64.iso</span><span class="w-2 h-4 bg-emerald-400 animate-pulse ml-1 inline-block" aria-hidden="true"></span>
-                </div>
-                <div id="terminal-output" class="mt-2 flex flex-col gap-1">
-                    <p class="text-gray-300">1. Choose a distribution, kernel, desktop, and packages.</p>
-                    <p class="text-cyan-400">2. Start the build and follow its log in Linux Studio.</p>
-                    <p class="text-emerald-400">3. Download the finished ISO.</p>
-                </div>
-            </div>
-        </div>
-    </main>
-
-    <!-- Features Section -->
-    <section class="py-24 bg-surface/50 border-t border-white/5 relative z-10">
-        <div class="max-w-7xl mx-auto px-6">
-            <div class="text-center mb-16">
-                <h2 class="text-3xl md:text-4xl font-bold mb-4">Everything you need to craft your OS.</h2>
-                <p class="text-gray-400 max-w-2xl mx-auto">Choose a base, put your tools in the image, then build in a compatible Linux environment.</p>
-            </div>
-
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Feature 1 -->
-                <div class="bg-surfaceLight rounded-xl p-8 border border-white/5 card-hover transition-all duration-300 group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-red-500/10 blur-3xl rounded-full group-hover:bg-red-500/20 transition-all"></div>
-                    <div class="w-12 h-12 bg-red-500/10 rounded-lg flex items-center justify-center mb-6 border border-red-500/20 text-red-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">Choose Your Base</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">Start with Debian, Ubuntu, Arch Linux, or Fedora. Pick the available kernel and desktop for your distribution.</p>
-                </div>
-
-                <!-- Feature 2 -->
-                <div class="bg-surfaceLight rounded-xl p-8 border border-white/5 card-hover transition-all duration-300 group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-emerald-500/10 blur-3xl rounded-full group-hover:bg-emerald-500/20 transition-all"></div>
-                    <div class="w-12 h-12 bg-emerald-500/10 rounded-lg flex items-center justify-center mb-6 border border-emerald-500/20 text-emerald-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">Pre-install Apps</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">Select apps from the catalog and set the language and keyboard you want in the live environment.</p>
-                </div>
-
-                <!-- Feature 3 -->
-                <div class="bg-surfaceLight rounded-xl p-8 border border-white/5 card-hover transition-all duration-300 group relative overflow-hidden">
-                    <div class="absolute top-0 right-0 w-32 h-32 bg-cyan-500/10 blur-3xl rounded-full group-hover:bg-cyan-500/20 transition-all"></div>
-                    <div class="w-12 h-12 bg-cyan-500/10 rounded-lg flex items-center justify-center mb-6 border border-cyan-500/20 text-cyan-400">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                    </div>
-                    <h3 class="text-xl font-semibold mb-3">Build and Download Your ISO</h3>
-                    <p class="text-gray-400 text-sm leading-relaxed">Create a Live ISO from your selections, follow the build log, and download the finished image directly from the app.</p>
-                </div>
-            </div>
-        </div>
+    <section class="section container intro-section" aria-labelledby="intro-title">
+      <div class="section-heading reveal"><p class="eyebrow">ΧΤΙΣΜΕΝΟ ΓΥΡΩ ΑΠΟ ΕΣΕΝΑ</p><h2 id="intro-title">Το σύστημά σου.<br><span>Με τους δικούς σου όρους.</span></h2></div>
+      <div class="intro-copy reveal"><p>Το Linux Studio συγκεντρώνει τις επιλογές δημιουργίας ενός Live ISO σε μια εφαρμογή. Ξεκινάς από Debian, Ubuntu, Arch ή Fedora και ορίζεις τι θα περιλαμβάνει η εικόνα σου.</p><p>Το τελικό αρχείο <code>.iso</code> περιέχει το Linux που διαμόρφωσες. Μπορείς να το δοκιμάσεις σε εικονική μηχανή ή να το γράψεις σε USB και να εκκινήσεις από αυτό.</p><a class="inline-link" href="./features.html">Όλες οι δυνατότητες <span aria-hidden="true">↗</span></a></div>
     </section>
 
-    <!-- Footer -->
-    <footer class="border-t border-white/10 py-12 bg-background relative z-10">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4 text-sm text-gray-500">
-            <div class="flex items-center gap-2">
-                <div class="w-6 h-6 rounded-md bg-gradient-to-br from-gray-700 to-gray-900 flex items-center justify-center">
-                    <svg class="w-3 h-3 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 9l3 3-3 3m5 0h3M4 17h16a2 2 0 002-2V5a2 2 0 00-2-2H4a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                </div>
-                <span>© 2026 Linux Studio · MIT</span>
-            </div>
-            <div class="flex gap-6">
-                <a href="https://firebase.google.com/support/privacy" class="hover:text-white transition-colors">Privacy</a>
-                <a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE" class="hover:text-white transition-colors">License</a>
-                <a href="https://github.com/Anserb/iso-studio" class="hover:text-white transition-colors">GitHub</a>
-            </div>
+    <section class="section explore-section" id="explore" aria-labelledby="explore-title">
+      <div class="container">
+        <div class="section-heading reveal"><p class="eyebrow">ΔΙΑΛΕΞΕ ΤΗΝ ΑΦΕΤΗΡΙΑ ΣΟΥ</p><h2 id="explore-title">Τέσσερις διανομές.<br><span>Ο δικός σου συνδυασμός.</span></h2><p class="section-description">Η διανομή δίνει τη βάση και τα αποθετήρια πακέτων. Ο kernel είναι ο πυρήνας του συστήματος. Το desktop είναι το γραφικό περιβάλλον που χρησιμοποιείς.</p></div>
+        <div class="explorer reveal">
+          <div class="distro-picker" role="group" aria-label="Επίλεξε διανομή για να δεις τις επιλογές">
+            <button type="button" data-distro="debian" aria-pressed="true" aria-controls="distro-detail"><span class="distro-monogram debian" aria-hidden="true">D</span><span>Debian<small>13 · Trixie</small></span><b aria-hidden="true">↗</b></button>
+            <button type="button" data-distro="ubuntu" aria-pressed="false" aria-controls="distro-detail"><span class="distro-monogram ubuntu" aria-hidden="true">U</span><span>Ubuntu<small>24.04 LTS</small></span><b aria-hidden="true">↗</b></button>
+            <button type="button" data-distro="arch" aria-pressed="false" aria-controls="distro-detail"><span class="distro-monogram arch" aria-hidden="true">A</span><span>Arch Linux<small>Rolling release</small></span><b aria-hidden="true">↗</b></button>
+            <button type="button" data-distro="fedora" aria-pressed="false" aria-controls="distro-detail"><span class="distro-monogram fedora" aria-hidden="true">F</span><span>Fedora<small>44</small></span><b aria-hidden="true">↗</b></button>
+          </div>
+          <div class="distro-detail" id="distro-detail" aria-live="polite" aria-atomic="true">
+            <div class="detail-top"><span class="mono">Η ΔΙΑΜΟΡΦΩΣΗ ΣΟΥ</span><span class="detail-dot" aria-hidden="true"></span></div>
+            <h3 id="distro-title">Debian 13</h3><p id="distro-description">Μια σταθερή βάση με επιλογή εγκαταστάτη για το τελικό ISO.</p>
+            <dl><div><dt>Kernel</dt><dd id="distro-kernel">Standard · Real-time</dd></div><div><dt>Desktop</dt><dd id="distro-desktop">Xfce · GNOME · KDE Plasma · Τερματικό</dd></div><div><dt>Δημιουργία με</dt><dd id="distro-tool">live-build</dd></div></dl>
+            <div class="environment-note"><span aria-hidden="true">↳</span><p id="distro-environment">Σε Debian 13 x86-64 ή σε ξεχωριστό περιβάλλον WSL 2 από τα Windows.</p></div>
+            <a class="inline-link" href="./download.html">Ξεκίνα με το Linux Studio <span aria-hidden="true">↗</span></a>
+          </div>
         </div>
-    </footer>
+        <p class="explorer-note reveal">Οι επιλογές εδώ δείχνουν τι υποστηρίζει η εφαρμογή. Η διαμόρφωση και η δημιουργία του ISO γίνονται στο εγκατεστημένο Linux Studio.</p>
+      </div>
+    </section>
 
-    <script src="./terminal-demo.js" defer></script>
+    <section class="section container product-section" aria-labelledby="product-title">
+      <div class="product-heading reveal"><div><p class="eyebrow">ΟΛΕΣ ΟΙ ΕΠΙΛΟΓΕΣ, ΜΠΡΟΣΤΑ ΣΟΥ</p><h2 id="product-title">Από την ιδέα<br><span>στο δικό σου ISO.</span></h2></div><p>Ένας οδηγός έξι βημάτων, με σύνοψη που ενημερώνεται όσο επιλέγεις. Βλέπεις τι θα περιέχει η εικόνα πριν ξεκινήσει η δημιουργία.</p></div>
+      <figure class="app-showcase reveal"><div class="window-bar"><span aria-hidden="true">● ● ●</span><span>Linux Studio — Εργαστήριο ISO</span><span class="mono">x86-64</span></div><img src="./studio-preview.png" alt="Η εφαρμογή Linux Studio με οδηγό έξι βημάτων, επιλογές Debian, Ubuntu, Arch και Fedora και ζωντανή σύνοψη ISO." width="1440" height="980" loading="lazy" decoding="async"></figure>
+      <div class="feature-notes">
+        <article class="reveal"><span class="feature-glyph" aria-hidden="true">◫</span><h3>Το desktop που προτιμάς</h3><p>Xfce, GNOME, KDE Plasma ή τερματικό, ανάλογα με τη διανομή. Διάλεξε πώς θα μοιάζει το Live σύστημά σου.</p></article>
+        <article class="reveal"><span class="feature-glyph" aria-hidden="true">⊞</span><h3>Οι εφαρμογές που χρειάζεσαι</h3><p>Πρόσθεσε επιλογές όπως Firefox, LibreOffice, VLC και εργαλεία ανάπτυξης, όπου υποστηρίζονται.</p></article>
+        <article class="reveal"><span class="feature-glyph" aria-hidden="true">↓</span><h3>Ένα αρχείο, έτοιμο για δοκιμή</h3><p>Παρακολούθησε την καταγραφή δημιουργίας και κατέβασε το ISO μόλις ολοκληρωθεί.</p></article>
+      </div>
+    </section>
+
+    <section class="workflow-section" id="how-it-works" aria-labelledby="workflow-title">
+      <div class="container workflow-layout">
+        <div class="workflow-heading reveal"><p class="eyebrow">ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ</p><h2 id="workflow-title">Εσύ επιλέγεις.<br><span>Το Linux Studio<br>το συνθέτει.</span></h2><a class="inline-link" href="./guide.html">Διάβασε τον οδηγό <span aria-hidden="true">↗</span></a></div>
+        <ol class="workflow-list">
+          <li class="reveal"><span class="step-mark" aria-hidden="true">↓</span><div><h3>Κατέβασε την εφαρμογή</h3><p>Εγκατέστησε το Linux Studio σε Windows ή Linux. Στα Windows, η εφαρμογή χρησιμοποιεί WSL 2 για Debian, Ubuntu και Arch και σε καθοδηγεί στην προετοιμασία του.</p></div></li>
+          <li class="reveal"><span class="step-mark" aria-hidden="true">☷</span><div><h3>Διαμόρφωσε το σύστημά σου</h3><p>Επίλεξε διανομή και kernel, πρόσθεσε desktop, γλώσσα, πληκτρολόγιο και εφαρμογές. Στο Debian μπορείς να συμπεριλάβεις τον Debian Installer.</p></div></li>
+          <li class="reveal"><span class="step-mark" aria-hidden="true">›_</span><div><h3>Ξεκίνα τη δημιουργία</h3><p>Πάτησε «Δημιουργία ISO». Τα εργαλεία της διανομής λαμβάνουν τα πακέτα και χτίζουν την εικόνα. Η πρόοδος εμφανίζεται στην καταγραφή της εφαρμογής.</p></div></li>
+          <li class="reveal"><span class="step-mark" aria-hidden="true">↗</span><div><h3>Κατέβασε και δοκίμασε το ISO</h3><p>Όταν ολοκληρωθεί, πάτησε «Λήψη ISO». Δοκίμασέ το σε εικονική μηχανή πριν το χρησιμοποιήσεις σε πραγματικό υπολογιστή.</p></div></li>
+        </ol>
+      </div>
+      <div class="container requirements reveal"><span class="mono">ΠΡΙΝ ΞΕΚΙΝΗΣΕΙΣ</span><p>Χρειάζεσαι σύνδεση στο διαδίκτυο και τουλάχιστον 30 GB ελεύθερου χώρου. Στο Linux η δημιουργία γίνεται στην αντίστοιχη διανομή. Το Fedora απαιτεί αποκλειστική VM. Η πλήρης δοκιμή παραγωγής και εκκίνησης ISO σε πραγματικό WSL 2 εκκρεμεί.</p></div>
+    </section>
+
+    <section class="section container faq-section" aria-labelledby="faq-title">
+      <div class="section-heading reveal"><p class="eyebrow">ΚΑΛΟ ΕΙΝΑΙ ΝΑ ΞΕΡΕΙΣ</p><h2 id="faq-title">Πριν το πρώτο σου <span>build.</span></h2></div>
+      <div class="faq-list reveal">
+        <details><summary>Τι ακριβώς δημιουργεί το Linux Studio;<span aria-hidden="true">+</span></summary><p>Μια εικόνα Linux Live σε αρχείο .iso, με τη διανομή, τον kernel, το γραφικό περιβάλλον και τα πακέτα που επέλεξες. Τη χρησιμοποιείς για εκκίνηση από USB ή σε εικονική μηχανή. Η επιλογή εγκαταστάτη στον δίσκο υποστηρίζεται στο προφίλ Debian.</p></details>
+        <details><summary>Μπορώ να το χρησιμοποιήσω στα Windows;<span aria-hidden="true">+</span></summary><p>Ναι. Το Linux Studio για Windows προετοιμάζει ξεχωριστό WSL 2 για Debian, Ubuntu και Arch. Η ενεργοποίηση του WSL 2 μπορεί να ζητήσει δικαιώματα διαχειριστή και επανεκκίνηση. Το Fedora χτίζεται σε αποκλειστική VM Fedora.</p></details>
+        <details><summary>Ποια είναι η διαφορά διανομής, kernel και desktop;<span aria-hidden="true">+</span></summary><p>Η διανομή, όπως το Debian, παρέχει τη βάση και τα αποθετήρια πακέτων. Ο kernel επικοινωνεί με το υλικό και διαχειρίζεται τους πόρους. Το desktop, όπως το KDE Plasma ή το Xfce, είναι το γραφικό περιβάλλον με τα παράθυρα και τα μενού.</p></details>
+        <details><summary>Είναι δωρεάν; Χρειάζομαι λογαριασμό;<span aria-hidden="true">+</span></summary><p>Ο πηγαίος κώδικας διατίθεται με άδεια MIT. Μπορείς να κατεβάσεις την εφαρμογή και να διαβάσεις τον οδηγό χωρίς λογαριασμό. Το site διαθέτει και σελίδα διαχείρισης λογαριασμού.</p></details>
+      </div>
+    </section>
+
+    <section class="download-section" aria-labelledby="download-title">
+      <img src="./images/arctic-reflections.jpg" alt="" width="1800" height="1200" loading="lazy" decoding="async"><div class="download-shade"></div>
+      <div class="container download-content reveal"><p class="eyebrow">Η ΕΠΟΜΕΝΗ ΕΚΚΙΝΗΣΗ ΕΙΝΑΙ ΔΙΚΗ ΣΟΥ</p><h2 id="download-title">Φτιάξε το Linux<br>που θέλεις να <em>ανοίγεις.</em></h2><p>Ξεκίνα από μια διανομή. Δώσε της τη δική σου κατεύθυνση.</p><div class="hero-actions"><a class="button" href="./download.html">Κατέβασε το Linux Studio <span aria-hidden="true">↗</span></a><a class="text-button" href="https://github.com/Anserb/iso-studio">Δες τον πηγαίο κώδικα ↗</a></div></div>
+    </section>
+  </main>
+  <footer class="site-footer"><div class="container footer-main"><a class="logo" href="./"><span class="logo-icon" aria-hidden="true">›_</span>Linux<span class="logo-light">Studio</span></a><p>Το Linux στα μέτρα σου.</p><div><a href="./features.html">Δυνατότητες</a><a href="./guide.html">Οδηγός</a><a href="./account.html">Λογαριασμός</a><a href="https://wincraft.pvgaming.uk/">WinCraft για Windows ↗</a></div></div><div class="container footer-bottom"><span>© 2026 Linux Studio · <a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a></span><span>Φωτογραφίες <a href="https://unsplash.com/photos/-3h8OXvt4-0">Jonatan Pie</a> &amp; <a href="https://unsplash.com/photos/alYjSlho1RM">Francesco Ungaro</a> / Unsplash</span></div></footer>
 </body>
 </html>

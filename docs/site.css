@@ -18,12 +18,12 @@
 }
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --page: #09090b;
-  --paper: #121214;
-  --line: #333336;
-  --ink: #f4f4f5;
-  --muted: #a1a1aa;
-  --accent: #34d399;
+  --page: #090f11;
+  --paper: #111a1c;
+  --line: #34423c;
+  --ink: #f2f5f1;
+  --muted: #a4b1ad;
+  --accent: #a5f3bf;
   --accent-fg: #07170f;
   --wash: #112820;
   --screen: #17171b;
@@ -111,6 +111,11 @@ h2 { font-size: clamp(1.8rem, 3.7vw, 3.2rem); line-height: 1.09; letter-spacing:
 .steps h3 { font-size: 1rem; }
 .steps p { color: var(--muted); }
 footer { border-top: 1px solid var(--line); }
+
+:root[data-theme="dark"] body { background-image: linear-gradient(#090f11df, #090f11 38rem), url('./images/aurora-mountains.jpg'); background-size: 100% 44rem; background-repeat: no-repeat; }
+.masthead { background: color-mix(in srgb, var(--page) 82%, transparent); backdrop-filter: blur(16px); }
+.feature-tile, .account-card, .questions details { box-shadow: 0 10px 45px #0000000d; }
+.page-intro h1 { letter-spacing: -.06em; line-height: 1.06; }
 
 [hidden] { display: none !important; }
 nav [aria-current="page"] { color: var(--accent); }
