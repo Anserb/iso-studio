@@ -97,4 +97,71 @@
   document.querySelectorAll('[data-choose]').forEach(link => {
     link.addEventListener('click', () => chooseDistro(link.dataset.choose));
   });
+
+  const simDistributions = {
+    debian: { kernels: ['linux-image-amd64', 'linux-image-rt-amd64'], desktops: ['Xfce', 'GNOME', 'KDE Plasma', 'Τερματικό'] },
+    ubuntu: { kernels: ['linux-generic', 'linux-hwe', 'linux-lowlatency'], desktops: ['Xfce', 'GNOME', 'KDE Plasma', 'Τερματικό'] },
+    arch: { kernels: ['linux', 'linux-lts', 'linux-zen', 'linux-hardened'], desktops: ['Xfce', 'Τερματικό'] },
+    fedora: { kernels: ['kernel', 'kernel-debug'], desktops: ['Xfce', 'GNOME', 'KDE Plasma', 'Τερματικό'] },
+  };
+  const simSteps = [
+    ['ΒΑΣΗ ΤΟΥ ISO', 'Διάλεξε διανομή και kernel'],
+    ['ΠΕΡΙΒΑΛΛΟΝ ΕΡΓΑΣΙΑΣ', 'Διάλεξε desktop και θέμα'],
+    ['ΓΛΩΣΣΑ ΚΑΙ ΠΛΗΚΤΡΟΛΟΓΙΟ', 'Ρύθμισε τη νέα εικόνα'],
+    ['ΕΦΑΡΜΟΓΕΣ', 'Επίλεξε εφαρμογές για το ISO'],
+    ['ΕΓΚΑΤΑΣΤΑΣΗ', 'Firmware και Debian installer'],
+    ['ΣΥΝΟΨΗ', 'Έλεγχος πριν τη δημιουργία'],
+  ];
+  let simStep = 0;
+  const simDistroSelect = document.querySelector('#sim-distro-select');
+  const simKernelSelect = document.querySelector('#sim-kernel-select');
+  const simDesktopSelect = document.querySelector('#sim-desktop-select');
+  const simRecipe = document.querySelector('#sim-recipe');
+  function updateSimRecipe() {
+    const distro = simDistroSelect.value;
+    const name = simDistributions[distro];
+    simRecipe.textContent = `distro: ${distro}\nkernel: ${simKernelSelect.value}\ndesktop: ${simDesktopSelect.value}\nlocale: el_GR\napps: 76 available\noutput: live-${distro}.iso`;
+  }
+  function selectSimDistro(id) {
+    if (!simDistributions[id]) return;
+    simDistroSelect.value = id;
+    document.querySelectorAll('[data-sim-distro]').forEach(button => button.classList.toggle('active', button.dataset.simDistro === id));
+    simKernelSelect.replaceChildren(...simDistributions[id].kernels.map(value => new Option(value, value)));
+    simDesktopSelect.replaceChildren(...simDistributions[id].desktops.map(value => new Option(value, value)));
+    updateSimRecipe();
+  }
+  document.querySelectorAll('[data-sim-distro]').forEach(button => button.addEventListener('click', () => selectSimDistro(button.dataset.simDistro)));
+  simDistroSelect.addEventListener('change', () => selectSimDistro(simDistroSelect.value));
+  simKernelSelect.addEventListener('change', updateSimRecipe);
+  simDesktopSelect.addEventListener('change', updateSimRecipe);
+  function setSimStep(index) {
+    simStep = Math.max(0, Math.min(5, index));
+    document.querySelectorAll('[data-sim-step]').forEach((button, buttonIndex) => button.classList.toggle('active', buttonIndex === simStep));
+    document.querySelector('#sim-step-kicker').textContent = simSteps[simStep][0];
+    document.querySelector('#sim-step-title').textContent = simSteps[simStep][1];
+  }
+  document.querySelectorAll('[data-sim-step]').forEach(button => button.addEventListener('click', () => setSimStep(Number(button.dataset.simStep))));
+  document.querySelector('#sim-next').addEventListener('click', () => setSimStep(simStep === 5 ? 0 : simStep + 1));
+  document.querySelectorAll('[data-sim-view]').forEach(button => button.addEventListener('click', () => {
+    document.querySelectorAll('[data-sim-view]').forEach(item => item.classList.toggle('active', item === button));
+    document.querySelector('#sim-iso-view').hidden = button.dataset.simView !== 'iso';
+    document.querySelector('#sim-apps-view').hidden = button.dataset.simView !== 'apps';
+    document.querySelector('#sim-profiles-view').hidden = button.dataset.simView !== 'profiles';
+    document.querySelector('#sim-page-title').textContent = button.dataset.simView === 'iso' ? 'Δημιουργία Linux ISO' : button.dataset.simView === 'apps' ? 'Εφαρμογές Linux' : 'Τα προφίλ μου';
+  }));
+  selectSimDistro('debian');
+
+  const supportForm = document.querySelector('#support-form');
+  supportForm.addEventListener('submit', event => {
+    event.preventDefault();
+    const data = new FormData(supportForm);
+    const subject = encodeURIComponent(`Linux Studio support: ${data.get('topic')}`);
+    const body = encodeURIComponent(`Όνομα: ${data.get('name')}\nEmail: ${data.get('email')}\nΘέμα: ${data.get('topic')}\n\n${data.get('message')}`);
+    location.href = `mailto:billpirgopoulos1@gmail.com?subject=${subject}&body=${body}`;
+  });
+
+  fetch('https://api.github.com/repos/Anserb/iso-studio/releases/latest', { headers: { Accept: 'application/vnd.github+json' } })
+    .then(response => response.ok ? response.json() : null)
+    .then(release => { if (release?.tag_name) document.querySelector('.sim-platform').textContent = `${release.tag_name} / x86-64 Live`; })
+    .catch(() => {});
 })();

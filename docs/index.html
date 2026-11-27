@@ -22,11 +22,11 @@
     <div class="container header-inner">
       <a class="logo" href="./" aria-label="Linux Studio, αρχική"><img class="logo-icon" src="./linux-studio-logo.svg" alt="">Linux<span class="logo-light">Studio</span></a>
       <nav class="desktop-nav" aria-label="Κύρια πλοήγηση">
-        <a href="#explore">Διανομές</a><a href="#how-it-works">Πώς λειτουργεί</a><a href="./guide.html">Οδηγός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a>
+        <a href="#app-preview">Επισκόπηση</a><a href="#explore">Διανομές</a><a href="#support">Υποστήριξη</a><a href="./guide.html">Οδηγός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a>
       </nav>
       <div class="nav-actions"><a class="login-link" href="./account.html">Σύνδεση</a><a class="button button-small" href="./download.html">Λήψη <span aria-hidden="true">↗</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="Μενού">☰</button></div>
     </div>
-    <nav id="mobile-menu" class="mobile-menu container" aria-label="Πλοήγηση κινητού" hidden><a href="#explore">Διανομές</a><a href="#how-it-works">Πώς λειτουργεί</a><a href="./guide.html">Οδηγός</a><a href="./account.html">Λογαριασμός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a></nav>
+    <nav id="mobile-menu" class="mobile-menu container" aria-label="Πλοήγηση κινητού" hidden><a href="#app-preview">Επισκόπηση</a><a href="#explore">Διανομές</a><a href="#support">Υποστήριξη</a><a href="./guide.html">Οδηγός</a><a href="./account.html">Λογαριασμός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a></nav>
   </header>
   <main id="main">
     <section class="hero" aria-labelledby="hero-heading">
@@ -49,6 +49,53 @@
       <div class="intro-copy reveal"><p>Το Linux Studio συγκεντρώνει τις επιλογές δημιουργίας ενός Live ISO σε μια εφαρμογή. Ξεκινάς από Debian, Ubuntu, Arch ή Fedora και ορίζεις τι θα περιλαμβάνει η εικόνα σου.</p><p>Το τελικό αρχείο <code>.iso</code> περιέχει το Linux που διαμόρφωσες. Μπορείς να το δοκιμάσεις σε εικονική μηχανή ή να το γράψεις σε USB και να εκκινήσεις από αυτό.</p><a class="inline-link" href="./features.html">Όλες οι δυνατότητες <span aria-hidden="true">↗</span></a></div>
     </section>
 
+    <section class="section app-preview-section" id="app-preview" aria-labelledby="app-preview-title">
+      <div class="container">
+        <div class="app-preview-heading reveal"><div><p class="eyebrow">ΔΙΑΔΡΑΣΤΙΚΗ ΕΠΙΣΚΟΠΗΣΗ</p><h2 id="app-preview-title">Ολόκληρη η εφαρμογή.<br><span>Σε μικρό πλαίσιο.</span></h2></div><p>Διάλεξε διανομή, kernel, desktop και εφαρμογές και δείτε πώς ενημερώνεται η προεπισκόπηση του Linux Studio.</p></div>
+        <div class="studio-simulator reveal" aria-label="Διαδραστική προεπισκόπηση Linux Studio">
+          <aside class="sim-sidebar">
+            <div class="sim-brand"><img src="./linux-studio-logo.svg" alt=""><strong>Linux Studio</strong></div>
+            <nav aria-label="Προεπισκόπηση μενού">
+              <button type="button" class="sim-nav active" data-sim-view="iso"><span>◉</span> Εργαστήριο ISO</button>
+              <button type="button" class="sim-nav" data-sim-view="apps"><span>⊞</span> Εφαρμογές Linux</button>
+              <button type="button" class="sim-nav" data-sim-view="profiles"><span>◇</span> Τα προφίλ μου</button>
+            </nav>
+            <span class="sim-version">Linux Studio v0.8.0</span>
+          </aside>
+          <div class="sim-workspace">
+            <header class="sim-toolbar"><div><span class="sim-status-dot"></span><strong id="sim-page-title">Δημιουργία Linux ISO</strong></div><span class="sim-platform">x86-64 / Live</span></header>
+            <div class="sim-content" id="sim-iso-view">
+              <div class="sim-distros" role="group" aria-label="Επίλεξε διανομή">
+                <button type="button" class="sim-distro active" data-sim-distro="debian"><b>D</b><span>Debian<small>13 Trixie</small></span></button>
+                <button type="button" class="sim-distro" data-sim-distro="ubuntu"><b>U</b><span>Ubuntu<small>24.04 LTS</small></span></button>
+                <button type="button" class="sim-distro" data-sim-distro="arch"><b>A</b><span>Arch<small>Rolling</small></span></button>
+                <button type="button" class="sim-distro" data-sim-distro="fedora"><b>F</b><span>Fedora<small>44</small></span></button>
+              </div>
+              <div class="sim-wizard">
+                <div class="sim-stepper" aria-label="Βήματα δημιουργίας"><button class="active" data-sim-step="0">1 Διανομή</button><button data-sim-step="1">2 Περιβάλλον</button><button data-sim-step="2">3 Γλώσσα</button><button data-sim-step="3">4 Εφαρμογές</button><button data-sim-step="4">5 Εγκατάσταση</button><button data-sim-step="5">6 Σύνοψη</button></div>
+                <div class="sim-form">
+                  <div class="sim-form-main">
+                    <span class="sim-eyebrow" id="sim-step-kicker">ΒΑΣΗ ΤΟΥ ISO</span>
+                    <h3 id="sim-step-title">Διάλεξε διανομή και kernel</h3>
+                    <label>Διανομή<select id="sim-distro-select"><option value="debian">Debian 13</option><option value="ubuntu">Ubuntu 24.04 LTS</option><option value="arch">Arch Linux</option><option value="fedora">Fedora 44</option></select></label>
+                    <label>Kernel<select id="sim-kernel-select"></select></label>
+                    <label>Desktop<select id="sim-desktop-select"></select></label>
+                  </div>
+                  <aside class="sim-summary"><span>LIVE RECIPE</span><pre id="sim-recipe"></pre><button type="button" id="sim-next" class="sim-next">Συνέχεια →</button></aside>
+                </div>
+              </div>
+            </div>
+            <div class="sim-content sim-library-view" id="sim-apps-view" hidden>
+              <header><span class="sim-eyebrow">LINUX STUDIO / APPS</span><h3>Ο κόσμος σου. Οι εφαρμογές σου.</h3></header>
+              <div class="sim-app-chips"><button class="active">Όλες</button><button>Γραφείο</button><button>Gaming</button><button>Προγραμματισμός</button><button>Δημιουργία</button></div>
+              <div class="sim-app-grid"><article><b>◎</b><span>LibreOffice<small>Γραφείο</small></span></article><article><b>⌁</b><span>Firefox<small>Internet</small></span></article><article><b>▶</b><span>VLC<small>Πολυμέσα</small></span></article><article><b>◆</b><span>Blender<small>3D</small></span></article><article><b>⌨</b><span>VS Code<small>Κώδικας</small></span></article><article><b>⚙</b><span>Steam<small>Gaming</small></span></article></div>
+            </div>
+            <div class="sim-content sim-library-view" id="sim-profiles-view" hidden><header><span class="sim-eyebrow">ΔΗΜΙΟΥΡΓΗΣΕ / ΚΡΑΤΗΣΕ / ΜΟΙΡΑΣΟΥ</span><h3>Τα προφίλ μου</h3></header><div class="sim-profile-grid"><article><span>08</span><h4>Gaming Debian</h4><p>Xfce · GNOME · Nord</p></article><article><span>12</span><h4>Creator Arch</h4><p>Zen kernel · Xfce</p></article><button type="button">+ Νέο προφίλ</button></div></div>
+          </div>
+        </div>
+        <div class="app-preview-links reveal"><a class="inline-link" href="./distributions.html">Διανομές και λήψεις <span>→</span></a><a class="inline-link" href="./download.html">Κατέβασε την εφαρμογή <span>↓</span></a></div>
+      </div>
+    </section>
     <section class="section explore-section" id="explore" aria-labelledby="explore-title">
       <div class="container">
         <div class="section-heading reveal"><p class="eyebrow">ΔΙΑΛΕΞΕ ΤΗΝ ΑΦΕΤΗΡΙΑ ΣΟΥ</p><h2 id="explore-title">Τέσσερις διανομές.<br><span>Ο δικός σου συνδυασμός.</span></h2><p class="section-description">Η διανομή δίνει τη βάση και τα αποθετήρια πακέτων. Ο kernel είναι ο πυρήνας του συστήματος. Το desktop είναι το γραφικό περιβάλλον που χρησιμοποιείς.</p></div>
@@ -104,6 +151,12 @@
       </div>
     </section>
 
+    <section class="support-section" id="support" aria-labelledby="support-title">
+      <div class="container support-layout">
+        <div><p class="eyebrow">ΥΠΟΣΤΗΡΙΞΗ</p><h2 id="support-title">Χρειάζεσαι βοήθεια;<br><span>Στείλε μας μήνυμα.</span></h2><p>Για εγκατάσταση, διανομές, δημιουργία ISO ή προβλήματα με μια έκδοση, συμπλήρωσε τη φόρμα.</p></div>
+        <form id="support-form" class="support-form"><label>Όνομα<input name="name" autocomplete="name" required></label><label>Email επικοινωνίας<input type="email" name="email" autocomplete="email" required></label><label>Θέμα<select name="topic"><option>Εγκατάσταση εφαρμογής</option><option>Επιλογές διανομής</option><option>Δημιουργία ISO</option><option>Λήψη και USB</option><option>Άλλο</option></select></label><label>Μήνυμα<textarea name="message" rows="5" required></textarea></label><button type="submit" class="button">Άνοιγμα email υποστήριξης <span>↗</span></button></form>
+      </div>
+    </section>
     <section class="download-section" aria-labelledby="download-title">
       <img src="./images/arctic-reflections.jpg" alt="" width="1800" height="1200" loading="lazy" decoding="async"><div class="download-shade"></div>
       <div class="container download-content reveal"><p class="eyebrow">Η ΕΠΟΜΕΝΗ ΕΚΚΙΝΗΣΗ ΕΙΝΑΙ ΔΙΚΗ ΣΟΥ</p><h2 id="download-title">Φτιάξε το Linux<br>που θέλεις να <em>ανοίγεις.</em></h2><p>Ξεκίνα από μια διανομή. Δώσε της τη δική σου κατεύθυνση.</p><div class="hero-actions"><a class="button" href="./download.html">Κατέβασε το Linux Studio <span aria-hidden="true">↗</span></a><a class="text-button" href="https://github.com/Anserb/iso-studio">Δες τον πηγαίο κώδικα ↗</a></div></div>
