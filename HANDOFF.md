@@ -14,6 +14,7 @@ node server.mjs
 
 - `index.html`, `style.css`, `app.mjs` — ελληνικό περιβάλλον επιλογής διανομής, kernel, desktop, γλώσσας, πληκτρολογίου και εφαρμογών.
 - `catalog.mjs` — υποστηριζόμενες επιλογές για Debian 13, Ubuntu 24.04 LTS, Arch Linux και Fedora 44.
+- `linux-apps.mjs`, `app-library.mjs`, `app-installer.mjs` — βιβλιοθήκη 76 εφαρμογών, αναζήτηση και κατηγορίες, μεμονωμένη ή μαζική εγκατάσταση μέσω Flatpak στο Linux του χρήστη. Οι λήψεις και τα αποτελέσματα εμφανίζονται μέσα στην εφαρμογή. Τα tests εκτελούνται με `node --test tests/app-installer.test.mjs`.
 - `recipe.mjs`, `other-builders.mjs` — έλεγχος διαμόρφωσης και παραγωγή σεναρίου Bash για κάθε διανομή.
 - `server.mjs` — τοπικός server, προετοιμασία εργαλείων, δημιουργία, καταγραφή και λήψη ISO.
 - `wsl-build.mjs` — έλεγχος WSL 2, προετοιμασία χωριστής διανομής και μεταφορά του ολοκληρωμένου ISO στα Windows.
@@ -27,7 +28,7 @@ node server.mjs
 
 ## Δημόσιο site
 
-Τα αρχεία του [linuxstudio.pvgaming.uk](https://linuxstudio.pvgaming.uk/) βρίσκονται στον φάκελο `docs/`. Από τη ρίζα του αποθετηρίου, η εντολή `npx --yes wrangler@4 deploy --config deploy/wrangler.jsonc` τα δημοσιεύει στον ξεχωριστό Cloudflare Worker `linux-studio`.
+Τα αρχεία του [linuxstudio.pvgaming.uk](https://linuxstudio.pvgaming.uk/) βρίσκονται στον φάκελο `docs/`. Από τη ρίζα του αποθετηρίου, εκτέλεσε `npm ci --prefix deploy` και μετά `npm --prefix deploy run deploy` για δημοσίευση στον ξεχωριστό Cloudflare Worker `linux-studio`, με την κλειδωμένη έκδοση Wrangler του έργου.
 
 Μετά από αλλαγές στις κλάσεις της αρχικής σελίδας, ανανέωσε το CSS από τη ρίζα του αποθετηρίου.
 

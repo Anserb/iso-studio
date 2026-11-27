@@ -1,4 +1,5 @@
 import { catalog, choicesFor, isoFilename } from './catalog.mjs';
+import { initAppLibrary } from './app-library.mjs';
 
 const byId = id => document.getElementById(id);
 const form = byId('configuration');
@@ -21,6 +22,7 @@ let statuses = {};
 const pendingEnvironment = { available: false, message: 'Έλεγχος περιβάλλοντος δημιουργίας…' };
 let builder = pendingEnvironment;
 let busy = false;
+let libraryBusy = false;
 let checkingEnvironment = false;
 const steps = [...document.querySelectorAll('[data-step]')];
 const previousStep = byId('previous');
@@ -31,10 +33,12 @@ let currentStep = 0;
 function renderRoute() {
   const route = location.hash.slice(1);
   const overview = route === 'overview';
+  const library = route === 'linux-apps';
   const showLog = route === 'build-result' && !result.hidden;
   currentStep = showLog ? steps.length - 1 : Math.max(0, steps.findIndex(link => link.dataset.step === route));
   byId('overview').hidden = !overview;
-  byId('wizard').hidden = overview;
+  byId('linux-apps').hidden = !library;
+  byId('wizard').hidden = overview || library;
   for (const [index, link] of steps.entries()) {
     const active = index === currentStep;
     if (active) link.setAttribute('aria-current', 'step');
@@ -45,7 +49,7 @@ function renderRoute() {
   previousStep.disabled = currentStep === 0;
   nextStep.hidden = currentStep === steps.length - 1;
   byId('step-count').textContent = `Βήμα ${currentStep + 1} από ${steps.length}`;
-  const currentNav = overview ? '#overview' : showLog ? '#build-result' : '#system';
+  const currentNav = library ? '#linux-apps' : overview ? '#overview' : showLog ? '#build-result' : '#system';
   for (const link of document.querySelectorAll('.side-nav a')) {
     if (link.getAttribute('href') === currentNav) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -58,6 +62,7 @@ window.addEventListener('hashchange', () => {
   renderRoute();
   if (document.activeElement === nameInput && !nameInput.validity.valid) return;
   const section = location.hash === '#overview' ? byId('overview')
+    : location.hash === '#linux-apps' ? byId('linux-apps')
     : location.hash === '#build-result' && !result.hidden ? result
     : byId(steps[currentStep].dataset.step);
   const heading = section.querySelector('h1, h2');
@@ -280,10 +285,11 @@ function setHostStatus(message, error = false) {
 
 function setBusy(value) {
   busy = value;
-  build.disabled = !builder.available || busy || checkingEnvironment || installingUpdate;
-  setupBuilder.disabled = busy || checkingEnvironment || installingUpdate;
-  checkBuilder.disabled = busy || checkingEnvironment || installingUpdate;
-  updateInstall.disabled = busy || installingUpdate;
+  build.disabled = !builder.available || busy || libraryBusy || checkingEnvironment || installingUpdate;
+  setupBuilder.disabled = busy || libraryBusy || checkingEnvironment || installingUpdate;
+  checkBuilder.disabled = busy || libraryBusy || checkingEnvironment || installingUpdate;
+  updateInstall.disabled = busy || libraryBusy || installingUpdate;
+  document.dispatchEvent(new CustomEvent('studio-busy', { detail: busy || installingUpdate }));
 }
 
 function refreshBuilder() {
@@ -350,7 +356,7 @@ updateCheck.addEventListener('click', () => void refreshUpdate('/check'));
 updateInstall.addEventListener('click', async () => {
   const message = automaticRestart ? 'Να εγκατασταθεί η ενημέρωση και να ανοίξει ξανά το Linux Studio;'
     : 'Να εγκατασταθεί η ενημέρωση του Linux Studio;';
-  if (busy || installingUpdate || !confirm(message)) return;
+  if (busy || libraryBusy || installingUpdate || !confirm(message)) return;
   installingUpdate = true;
   setBusy(busy);
   updateMessage('Εγκατάσταση ενημέρωσης…');
@@ -494,6 +500,7 @@ form.addEventListener('submit', async event => {
 });
 
 configureDistro();
+initAppLibrary({ onBusy(value) { libraryBusy = value; setBusy(busy); } });
 renderRoute();
 void refreshUpdate('/check');
 void loadEnvironment(true);

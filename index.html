@@ -14,11 +14,12 @@
     <nav class="side-nav" aria-label="Ενότητες">
       <a href="#overview"><span aria-hidden="true">⌂</span> Επισκόπηση</a>
       <a href="#system" data-wizard-link><span aria-hidden="true">◉</span> Εργαστήριο ISO</a>
+      <a href="#linux-apps"><span aria-hidden="true">⊞</span> Εφαρμογές Linux</a>
       <a href="#build-result" id="log-nav" hidden><span aria-hidden="true">≡</span> Καταγραφή</a>
       <a href="https://linuxstudio.pvgaming.uk/guide" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Οδηγός</a>
     </nav>
     <div class="sidebar-footer">
-      <span class="version">Linux Studio v0.5.0</span>
+      <span class="version">Linux Studio v0.6.0</span>
       <div class="theme-picker" role="group" aria-label="Θέμα εφαρμογής">
         <button type="button" data-theme-choice="dark" aria-pressed="true">Σκούρο</button>
         <button type="button" data-theme-choice="light" aria-pressed="false">Φωτεινό</button>
@@ -43,6 +44,24 @@
       </header>
       <h2 class="overview-heading">Ξεκίνα με μια διανομή</h2>
       <div class="overview-grid" id="quick-distros"></div>
+    </section>
+    <section id="linux-apps" aria-labelledby="library-title" hidden>
+      <header class="library-hero">
+        <div><span class="library-eyebrow">LINUX STUDIO / APPS</span><h1 id="library-title">Ο κόσμος σου.<br><span>Οι εφαρμογές σου.</span></h1><p>Ανακάλυψε εργαλεία για δουλειά, παιχνίδι και δημιουργία. Πάτησε Install και άφησε τη λήψη και την εγκατάσταση στο Linux Studio.</p><div class="library-badges"><span>Debian / Ubuntu</span><span>Fedora</span><span>Arch</span><span>openSUSE</span><span>Linux + Flatpak</span></div></div>
+        <div class="library-hero-art" aria-hidden="true"><span>PLAY</span><span>CREATE</span><span>WORK</span><strong>apps<span>for your Linux.</span></strong><i>↓ INSTALL / ENJOY</i></div>
+      </header>
+      <div class="library-host"><div><strong id="library-host-title">Ο υπολογιστής σου</strong><p id="library-host-status" role="status">Ελέγχεται η δυνατότητα εγκατάστασης…</p></div><button type="button" class="secondary" id="library-refresh">Επανέλεγχος ↻</button></div>
+      <div class="library-section-heading"><div><span class="library-eyebrow">ΞΕΚΙΝΑ ΜΕ ΜΙΑ ΣΥΛΛΟΓΗ</span><h2>Διάλεξε τη φάση σου.</h2></div><p>Πρόσθεσε μια συλλογή στην επιλογή σου.</p></div>
+      <div id="library-collections" class="library-collections"></div>
+      <div class="library-section-heading"><div><span class="library-eyebrow">Η ΒΙΒΛΙΟΘΗΚΗ ΣΟΥ</span><h2>Βρες το επόμενο εργαλείο σου.</h2></div><span id="library-total"></span></div>
+      <div class="library-toolbar"><label class="library-search"><span class="visually-hidden">Αναζήτηση εφαρμογών</span><span aria-hidden="true">⌕</span><input id="library-search" type="search" placeholder="Αναζήτηση εφαρμογής ή χρήσης…" autocomplete="off"></label><label class="library-installed-filter"><input type="checkbox" id="library-installed-only"> Μόνο εγκατεστημένες Flatpak</label></div>
+      <div id="library-categories" class="library-categories" role="group" aria-label="Κατηγορίες εφαρμογών"></div>
+      <div class="library-selection"><div><strong id="library-selection-count" aria-live="polite">Καμία επιλογή</strong><small>Εγκατάσταση στον υπολογιστή όπου τρέχει το Linux Studio.</small></div><div><button type="button" id="library-clear" class="secondary" disabled>Καθαρισμός</button><button type="button" id="library-install-selected" class="primary" disabled>Install επιλεγμένων ↓</button></div></div>
+      <section id="library-job" class="panel library-job" aria-labelledby="library-job-title" hidden><div class="library-section-heading"><h2 id="library-job-title">Εγκατάσταση εφαρμογών</h2><span id="library-job-count"></span></div><p id="library-job-status" role="status"></p><progress id="library-progress" max="1" value="0" aria-label="Εφαρμογές που ολοκληρώθηκαν"></progress><ul id="library-job-results"></ul><details><summary>Λεπτομέρειες λήψης και εγκατάστασης</summary><pre id="library-job-log" tabindex="0" aria-label="Καταγραφή εγκατάστασης εφαρμογών"></pre></details></section>
+      <p id="library-message" role="status" hidden></p>
+      <div id="library-grid" class="library-grid"></div>
+      <p id="library-empty" class="panel library-empty" hidden>Δεν βρέθηκαν εφαρμογές. Δοκίμασε άλλη αναζήτηση ή κατηγορία.</p>
+      <p class="library-footnote">Πηγή εφαρμογών: Flathub. Οι εκδόσεις Flatpak μπορεί να συντηρούνται από τους δημιουργούς τους ή την κοινότητα. Ορισμένες υπηρεσίες και παιχνίδια χρειάζονται λογαριασμό ή αγορά. Οι εγκατεστημένες εφαρμογές εμφανίζονται στο μενού του Linux σου· στην πρώτη προετοιμασία Flatpak μπορεί να χρειαστεί αποσύνδεση και νέα είσοδος.</p>
     </section>
     <div id="wizard">
       <header class="intro">

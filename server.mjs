@@ -8,6 +8,7 @@ import { delimiter, dirname, isAbsolute, join, resolve } from 'node:path';
 import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { catalog } from './catalog.mjs';
+import { createAppInstaller } from './app-installer.mjs';
 import { makeRecipe } from './recipe.mjs';
 import { createUpdater } from './updates.mjs';
 import { buildInWsl, inspectWsl, inspectWslDistro, runLogged, runToolSetup, setupWsl } from './wsl-build.mjs';
@@ -26,6 +27,7 @@ const linuxApp = join(isAbsolute(dataHome ?? '') ? dataHome : join(homedir(), '.
 const installed = process.platform === 'linux' ? process.getuid() !== 0 && resolve(root) === await realpath(linuxApp).catch(() => null)
   : process.platform === 'win32' && process.env.LINUX_STUDIO_WINDOWS_SETUP === '1';
 const updater = createUpdater({ directory: join(dirname(appearance), 'updates'), installed });
+const appInstaller = createAppInstaller();
 let applyingUpdate = false;
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -33,6 +35,8 @@ const assets = new Map([
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/catalog.mjs', ['catalog.mjs', 'text/javascript; charset=utf-8']],
   ['/desktop-appearance.mjs', ['desktop-appearance.mjs', 'text/javascript; charset=utf-8']],
+  ['/linux-apps.mjs', ['linux-apps.mjs', 'text/javascript; charset=utf-8']],
+  ['/app-library.mjs', ['app-library.mjs', 'text/javascript; charset=utf-8']],
 ]);
 const jobs = new Map();
 let latestJob;
@@ -151,7 +155,7 @@ async function runJob(job, recipe, environment) {
 }
 
 function occupied() {
-  return applyingUpdate || jobs.get(latestJob)?.state === 'running';
+  return applyingUpdate || appInstaller.active() || jobs.get(latestJob)?.state === 'running';
 }
 
 function createJob(kind, filename) {
@@ -203,6 +207,12 @@ const server = createServer(async (request, response) => {
         return json(response, 200, { statuses, latestJob });
       }
       if (path === '/api/update') return json(response, 200, updater.info());
+      if (path === '/api/apps/status') return json(response, 200, await appInstaller.inspect());
+      const appJobMatch = /^\/api\/apps\/jobs\/([a-f0-9-]+)$/.exec(path);
+      if (appJobMatch) {
+        const job = appInstaller.job(appJobMatch[1]);
+        return job ? json(response, 200, job) : json(response, 404, { error: 'Η εργασία εγκατάστασης δεν βρέθηκε.' });
+      }
       if (path === '/api/update/file') {
         const update = await updater.verifiedUpdate();
         if (!update) return json(response, 404, { error: 'Δεν υπάρχει διαθέσιμο πακέτο ενημέρωσης.' });
@@ -238,6 +248,16 @@ const server = createServer(async (request, response) => {
         await pipeline(createReadStream(filePath), response);
         return;
       }
+    }
+    if (request.method === 'POST' && path === '/api/apps/install') {
+      let options;
+      try { options = await readJson(request); }
+      catch (error) { return json(response, 400, { error: error.message }); }
+      if (occupied()) return json(response, 409, { error: 'Περίμενε να ολοκληρωθεί η εργασία που εκτελείται.' });
+      try {
+        const id = appInstaller.start(options?.apps);
+        return json(response, 202, { id });
+      } catch (error) { return json(response, 400, { error: error.message }); }
     }
     if (request.method === 'POST' && path === '/api/update/check') {
       void updater.check();

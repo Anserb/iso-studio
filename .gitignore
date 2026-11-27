@@ -5,3 +5,5 @@ obj/
 out/
 release/
 installer/runtime/
+node_modules/
+.wrangler/

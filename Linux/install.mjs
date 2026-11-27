@@ -4,7 +4,7 @@ import { basename, dirname, isAbsolute, join } from 'node:path';
 
 const files = [
   'app.mjs', 'catalog.mjs', 'index.html', 'other-builders.mjs', 'recipe.mjs',
-  'server.mjs', 'style.css', 'updates.mjs', 'wsl-build.mjs', 'desktop-appearance.mjs', 'Linux/launch.mjs', 'LICENSE',
+  'server.mjs', 'style.css', 'updates.mjs', 'wsl-build.mjs', 'desktop-appearance.mjs', 'linux-apps.mjs', 'app-library.mjs', 'app-installer.mjs', 'Linux/launch.mjs', 'LICENSE',
 ];
 const app = new URL('../', import.meta.url);
 
