@@ -16,41 +16,44 @@ if (process.platform === 'linux') {
 }
 delete env.NODE_OPTIONS;
 delete env.LINUX_STUDIO_PARENT_PID;
-const server = fork(fileURLToPath(new URL('server.mjs', root)), {
-  cwd: root, env, execArgv: [], stdio: ['inherit', 'inherit', 'inherit', 'ipc'],
-});
-
-const timeout = setTimeout(() => {
-  console.error('Ο server δεν απάντησε εγκαίρως.');
-  shutdown(1);
-}, 15_000);
+let server, activePort, stopping = false;
+const installedDirectory = join(isAbsolute(process.env.XDG_DATA_HOME ?? '') ? process.env.XDG_DATA_HOME : join(homedir(), '.local', 'share'), 'linux-studio', 'app');
 
 function shutdown(code) {
+  stopping = true;
   process.exitCode = code;
-  server.kill();
+  server?.kill();
 }
 
-server.once('error', (error) => {
-  clearTimeout(timeout);
-  console.error(error.message);
-  process.exitCode = 1;
-});
-server.once('exit', (code) => {
-  clearTimeout(timeout);
-  process.exitCode ??= code ?? 1;
-});
-server.once('message', ({ port }) => {
-  clearTimeout(timeout);
-  const url = `http://127.0.0.1:${port}`;
-  console.log('Άφησε αυτό το τερματικό ανοιχτό. Πάτησε Ctrl+C για έξοδο.');
-  if (process.argv.includes('--no-browser')) return;
-
-  const browser = spawn('xdg-open', [url], { detached: true, stdio: 'ignore' });
-  const manual = () => console.log(`Άνοιξε χειροκίνητα τη διεύθυνση ${url}`);
-  browser.once('error', manual);
-  browser.once('exit', (code) => { if (code !== 0) manual(); });
-  browser.unref();
-});
+function start(directory) {
+  let restart = false;
+  const child = fork(join(directory, 'server.mjs'), { cwd: directory, env: { ...env, PORT: activePort ? String(activePort) : '0' }, execArgv: [], stdio: ['inherit', 'inherit', 'inherit', 'ipc'] });
+  server = child;
+  const timeout = setTimeout(() => { console.error('Ο server δεν απάντησε εγκαίρως.'); shutdown(1); }, 15_000);
+  child.once('error', error => { clearTimeout(timeout); console.error(error.message); process.exitCode = 1; });
+  child.once('exit', code => {
+    clearTimeout(timeout);
+    if (restart && !stopping) start(installedDirectory);
+    else process.exitCode ??= code ?? 1;
+  });
+  child.on('message', message => {
+    if (message.restart === true && process.platform === 'linux') { restart = true; child.kill(); return; }
+    if (!Number.isInteger(message.port)) return;
+    clearTimeout(timeout);
+    const first = !activePort;
+    activePort = message.port;
+    if (!first) { console.log('Linux Studio · ενημερώθηκε και ξεκίνησε ξανά.'); return; }
+    const url = `http://127.0.0.1:${activePort}`;
+    console.log('Άφησε αυτό το τερματικό ανοιχτό. Πάτησε Ctrl+C για έξοδο.');
+    if (process.argv.includes('--no-browser')) return;
+    const browser = spawn('xdg-open', [url], { detached: true, stdio: 'ignore' });
+    const manual = () => console.log(`Άνοιξε χειροκίνητα τη διεύθυνση ${url}`);
+    browser.once('error', manual);
+    browser.once('exit', code => { if (code !== 0) manual(); });
+    browser.unref();
+  });
+}
+start(fileURLToPath(root));
 process.once('SIGINT', () => shutdown(130));
 process.once('SIGTERM', () => shutdown(143));
 if (process.platform === 'linux') process.once('SIGHUP', () => shutdown(129));

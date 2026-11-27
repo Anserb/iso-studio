@@ -1,5 +1,6 @@
 import { catalog, choicesFor, isoFilename } from './catalog.mjs';
 import { initAppLibrary } from './app-library.mjs';
+import { initStudio } from './studio-ui.mjs';
 
 const byId = id => document.getElementById(id);
 const form = byId('configuration');
@@ -18,11 +19,14 @@ const updateFile = byId('update-file');
 let updateTimer;
 let installingUpdate = false;
 let automaticRestart = false;
+let loadedVersion;
 let statuses = {};
 const pendingEnvironment = { available: false, message: 'Έλεγχος περιβάλλοντος δημιουργίας…' };
 let builder = pendingEnvironment;
 let busy = false;
 let libraryBusy = false;
+let studioBusy = false;
+let studio;
 let checkingEnvironment = false;
 const steps = [...document.querySelectorAll('[data-step]')];
 const previousStep = byId('previous');
@@ -34,11 +38,13 @@ function renderRoute() {
   const route = location.hash.slice(1);
   const overview = route === 'overview';
   const library = route === 'linux-apps';
+  const studioPage = [...document.querySelectorAll('[data-studio-page]')].find(page => page.id === route);
+  for (const page of document.querySelectorAll('[data-studio-page]')) page.hidden = page !== studioPage;
   const showLog = route === 'build-result' && !result.hidden;
   currentStep = showLog ? steps.length - 1 : Math.max(0, steps.findIndex(link => link.dataset.step === route));
   byId('overview').hidden = !overview;
   byId('linux-apps').hidden = !library;
-  byId('wizard').hidden = overview || library;
+  byId('wizard').hidden = overview || library || Boolean(studioPage);
   for (const [index, link] of steps.entries()) {
     const active = index === currentStep;
     if (active) link.setAttribute('aria-current', 'step');
@@ -49,7 +55,7 @@ function renderRoute() {
   previousStep.disabled = currentStep === 0;
   nextStep.hidden = currentStep === steps.length - 1;
   byId('step-count').textContent = `Βήμα ${currentStep + 1} από ${steps.length}`;
-  const currentNav = library ? '#linux-apps' : overview ? '#overview' : showLog ? '#build-result' : '#system';
+  const currentNav = studioPage ? `#${studioPage.id}` : library ? '#linux-apps' : overview ? '#overview' : showLog ? '#build-result' : '#system';
   for (const link of document.querySelectorAll('.side-nav a')) {
     if (link.getAttribute('href') === currentNav) link.setAttribute('aria-current', 'page');
     else link.removeAttribute('aria-current');
@@ -63,8 +69,8 @@ window.addEventListener('hashchange', () => {
   if (document.activeElement === nameInput && !nameInput.validity.valid) return;
   const section = location.hash === '#overview' ? byId('overview')
     : location.hash === '#linux-apps' ? byId('linux-apps')
-    : location.hash === '#build-result' && !result.hidden ? result
-    : byId(steps[currentStep].dataset.step);
+    : document.querySelector(`[data-studio-page][id="${CSS.escape(location.hash.slice(1))}"]`)
+      || (location.hash === '#build-result' && !result.hidden ? result : byId(steps[currentStep].dataset.step));
   const heading = section.querySelector('h1, h2');
   heading.tabIndex = -1;
   heading.focus({ preventScroll: true });
@@ -285,11 +291,11 @@ function setHostStatus(message, error = false) {
 
 function setBusy(value) {
   busy = value;
-  build.disabled = !builder.available || busy || libraryBusy || checkingEnvironment || installingUpdate;
-  setupBuilder.disabled = busy || libraryBusy || checkingEnvironment || installingUpdate;
-  checkBuilder.disabled = busy || libraryBusy || checkingEnvironment || installingUpdate;
-  updateInstall.disabled = busy || libraryBusy || installingUpdate;
-  document.dispatchEvent(new CustomEvent('studio-busy', { detail: busy || installingUpdate }));
+  build.disabled = !builder.available || busy || libraryBusy || studioBusy || checkingEnvironment || installingUpdate;
+  setupBuilder.disabled = busy || libraryBusy || studioBusy || checkingEnvironment || installingUpdate;
+  checkBuilder.disabled = busy || libraryBusy || studioBusy || checkingEnvironment || installingUpdate;
+  updateInstall.disabled = busy || libraryBusy || studioBusy || installingUpdate;
+  document.dispatchEvent(new CustomEvent('studio-busy', { detail: busy || installingUpdate || libraryBusy || studioBusy }));
 }
 
 function refreshBuilder() {
@@ -318,6 +324,8 @@ function updateMessage(message, error = false) {
 }
 
 function renderUpdate(info) {
+  if (loadedVersion && loadedVersion !== info.current) { location.reload(); return; }
+  loadedVersion ??= info.current;
   const active = ['idle', 'checking', 'downloading', 'installing'].includes(info.status);
   const messages = {
     idle: 'Έλεγχος για νέα έκδοση…',
@@ -356,7 +364,7 @@ updateCheck.addEventListener('click', () => void refreshUpdate('/check'));
 updateInstall.addEventListener('click', async () => {
   const message = automaticRestart ? 'Να εγκατασταθεί η ενημέρωση και να ανοίξει ξανά το Linux Studio;'
     : 'Να εγκατασταθεί η ενημέρωση του Linux Studio;';
-  if (busy || libraryBusy || installingUpdate || !confirm(message)) return;
+  if (busy || libraryBusy || studioBusy || installingUpdate || !confirm(message)) return;
   installingUpdate = true;
   setBusy(busy);
   updateMessage('Εγκατάσταση ενημέρωσης…');
@@ -401,6 +409,7 @@ async function followBuild(id) {
         }
         const size = new Intl.NumberFormat('el', { maximumFractionDigits: 0 }).format(job.bytes / 1024 ** 2);
         buildStatus.textContent = `Έτοιμο · ${size} MiB`;
+        if (job.sha256) buildStatus.textContent += ` · SHA-256 ${job.sha256}`;
         isoLink.href = `/api/builds/${id}/iso`;
         isoLink.download = job.filename;
         isoLink.hidden = false;
@@ -414,6 +423,7 @@ async function followBuild(id) {
     buildStatus.setAttribute('data-error', '');
   } finally {
     setBusy(false);
+    document.dispatchEvent(new Event('studio-history-changed'));
   }
 }
 
@@ -474,11 +484,7 @@ form.addEventListener('submit', async event => {
     nameInput.reportValidity();
     return;
   }
-  const data = new FormData(form);
-  const options = Object.fromEntries(data);
-  options.firmware = data.has('firmware');
-  options.installer = data.has('installer');
-  options.apps = data.getAll('apps');
+  const options = { ...getConfiguration(), ...studio.extras() };
   setHostStatus(builder.message);
   setBusy(true);
 
@@ -500,7 +506,30 @@ form.addEventListener('submit', async event => {
 });
 
 configureDistro();
+function getConfiguration() {
+  const data = new FormData(form);
+  return { distro: data.get('distro'), kernel: data.get('kernel'), name: data.get('name'), desktop: data.get('desktop'),
+    appearance: data.get('appearance') || 'default', language: data.get('language'), keyboard: data.get('keyboard'),
+    firmware: data.has('firmware'), installer: data.has('installer'), apps: data.getAll('apps') };
+}
+function applyConfiguration(options, adapt = false) {
+  if (!catalog.distros.some(distro => distro.id === options.distro)) throw new Error('Το προφίλ χρησιμοποιεί μη υποστηριζόμενη διανομή.');
+  form.elements.distro.value = options.distro;
+  configureDistro();
+  const desktop = [...form.querySelectorAll('[name="desktop"]')].find(item => item.value === options.desktop);
+  if (desktop) desktop.checked = true;
+  else if (!adapt) throw new Error('Το desktop του προφίλ δεν είναι διαθέσιμο.');
+  for (const key of ['name', 'kernel', 'language', 'keyboard', 'appearance']) {
+    if (options[key] !== undefined) form.elements[key].value = options[key];
+  }
+  for (const key of ['firmware', 'installer']) form.elements[key].checked = Boolean(options[key]) && !form.elements[key].disabled;
+  for (const input of form.querySelectorAll('[name="apps"]')) input.checked = options.apps.includes(input.value);
+  refreshSummary(); refreshBuilder();
+}
 initAppLibrary({ onBusy(value) { libraryBusy = value; setBusy(busy); } });
+studio = initStudio({ getOptions: getConfiguration, applyOptions: applyConfiguration,
+  onBusy(value) { studioBusy = value; setBusy(busy); }, checkUpdates: () => void refreshUpdate('/check') });
 renderRoute();
 void refreshUpdate('/check');
+setInterval(() => void refreshUpdate(), 10_000);
 void loadEnvironment(true);

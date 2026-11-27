@@ -1,6 +1,7 @@
 import { catalog, choicesFor, isoFilename } from './catalog.mjs';
 import { buildArch, buildFedora, buildUbuntu } from './other-builders.mjs';
 import { appearancePackages, appearanceSetup } from './desktop-appearance.mjs';
+import { validateExtras, personalFilesSetup } from './studio-customization.mjs';
 
 const select = (items, id) => items.find(item => item.id === id);
 const builders = { debian: buildDebian, arch: buildArch, fedora: buildFedora, ubuntu: buildUbuntu };
@@ -11,6 +12,7 @@ export function makeRecipe(options) {
   }
   const { name, kernel, desktop, language, keyboard, firmware, installer, apps } = options;
   const appearance = options.appearance ?? 'default';
+  const { files, customization } = validateExtras(options);
   if (typeof name !== 'string' || !/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(name)) {
     throw new Error('Χρησιμοποίησε 1–32 πεζά λατινικά γράμματα, αριθμούς ή παύλες. Ξεκίνα και τελείωσε με γράμμα ή αριθμό.');
   }
@@ -29,10 +31,10 @@ export function makeRecipe(options) {
   }
   const packages = [...new Set([
     ...apps.map(id => select(choices.apps, id).packages?.[distro.id] ?? id),
-    ...appearancePackages(distro.id, desktop, appearance),
+    ...appearancePackages(distro.id, desktop, appearance, customization),
   ])];
   const filename = isoFilename(name, distro.id);
-  const steps = builders[distro.id]({ name, kernel, desktop, language, keyboard, firmware, installer, packages, distro, appearance });
+  const steps = builders[distro.id]({ name, kernel, desktop, language, keyboard, firmware, installer, packages, distro, appearance, files, customization });
   const releaseCheck = distro.release ? ` || [[ "$host_release" != '${distro.release}' ]]` : '';
   const vmCheck = distro.needsVm ? `
 if ! systemd-detect-virt --vm --quiet; then
@@ -81,7 +83,7 @@ echo "ISO ready: $output"
 ` };
 }
 
-function buildDebian({ name, kernel, desktop, language, keyboard, firmware, installer, packages, appearance }) {
+function buildDebian({ name, kernel, desktop, language, keyboard, firmware, installer, packages, appearance, files, customization }) {
   const livePackages = new Set(['live-task-standard', `live-task-${desktop}`, 'locales', 'console-setup', ...packages]);
   const bootOptions = ['boot=live', 'components', `locales=${language}`, `keyboard-layouts=${keyboard}`, `hostname=${name}`];
   if (keyboard === 'us,gr') bootOptions.push('keyboard-options=grp:alt_shift_toggle');
@@ -112,7 +114,8 @@ cat > config/package-lists/studio.list.chroot <<'PACKAGES'
 ${[...livePackages].join('\n')}
 PACKAGES
 
-${appearanceSetup(desktop, appearance, 'config/includes.chroot')}
+${appearanceSetup(desktop, appearance, 'config/includes.chroot', customization)}
+${personalFilesSetup(files, 'config/includes.chroot', customization?.wallpaper)}
 ${desktop === 'gnome' && appearance !== 'default' ? `mkdir -p config/hooks/normal
 cat > config/hooks/normal/0900-studio-appearance.hook.chroot <<'STUDIO_COMPILE_SCHEMAS'
 #!/bin/sh

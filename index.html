@@ -6,20 +6,26 @@
   <meta name="color-scheme" content="dark light">
   <title>Linux Studio — Δημιουργία Linux ISO</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <script type="module" src="/app.mjs"></script>
 </head>
 <body>
   <aside class="sidebar" aria-label="Linux Studio">
-    <a class="brand" href="#overview"><span class="brand-icon" aria-hidden="true">›_</span><strong>Linux Studio</strong></a>
+    <a class="brand" href="#overview"><img class="brand-logo" src="/logo.svg" alt=""><strong>Linux Studio</strong></a>
     <nav class="side-nav" aria-label="Ενότητες">
       <a href="#overview"><span aria-hidden="true">⌂</span> Επισκόπηση</a>
       <a href="#system" data-wizard-link><span aria-hidden="true">◉</span> Εργαστήριο ISO</a>
       <a href="#linux-apps"><span aria-hidden="true">⊞</span> Εφαρμογές Linux</a>
+      <a href="#my-apps"><span aria-hidden="true">▣</span> Οι εφαρμογές μου</a>
+      <a href="#profiles"><span aria-hidden="true">◇</span> Τα προφίλ μου</a>
+      <a href="#history"><span aria-hidden="true">↶</span> Ιστορικό</a>
+      <a href="#tools"><span aria-hidden="true">◫</span> Δοκιμή και USB</a>
+      <a href="#updates-center"><span aria-hidden="true">↻</span> Ενημερώσεις</a>
       <a href="#build-result" id="log-nav" hidden><span aria-hidden="true">≡</span> Καταγραφή</a>
       <a href="https://linuxstudio.pvgaming.uk/guide" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Οδηγός</a>
     </nav>
     <div class="sidebar-footer">
-      <span class="version">Linux Studio v0.6.0</span>
+      <span class="version">Linux Studio v0.7.0</span>
       <div class="theme-picker" role="group" aria-label="Θέμα εφαρμογής">
         <button type="button" data-theme-choice="dark" aria-pressed="true">Σκούρο</button>
         <button type="button" data-theme-choice="light" aria-pressed="false">Φωτεινό</button>
@@ -33,6 +39,13 @@
     </div>
   </aside>
   <main class="page" id="main">
+    <p id="studio-notice" class="studio-notice" role="status" hidden></p>
+    <section id="my-apps" data-studio-page hidden aria-labelledby="my-apps-title"><header class="intro"><div><span class="library-eyebrow">ΤΟ ΣΥΣΤΗΜΑ ΣΟΥ</span><h1 id="my-apps-title">Οι εφαρμογές μου</h1><p>Άνοιγμα, ενημέρωση και απεγκατάσταση των εγκατεστημένων εκδόσεων Flatpak.</p></div><button class="secondary" id="managed-refresh" type="button">Ανανέωση ↻</button></header><div id="managed-apps" class="studio-grid"></div></section>
+    <section id="profiles" data-studio-page hidden aria-labelledby="profiles-title"><header class="intro"><div><span class="library-eyebrow">ΔΗΜΙΟΥΡΓΗΣΕ / ΚΡΑΤΗΣΕ / ΜΟΙΡΑΣΟΥ</span><h1 id="profiles-title">Τα προφίλ μου</h1><p>Αποθήκευσε τις επιλογές και τα αρχεία του ISO σου. Εξήγαγε ένα προφίλ και συνέχισε σε άλλο υπολογιστή.</p></div><label class="secondary file-upload">Εισαγωγή προφίλ<input type="file" id="import-profile" accept="application/json,.json"></label></header><div id="profile-list" class="studio-grid"></div></section>
+    <section id="history" data-studio-page hidden aria-labelledby="history-title"><header class="intro"><div><span class="library-eyebrow">ΟΙ ΔΗΜΙΟΥΡΓΙΕΣ ΣΟΥ</span><h1 id="history-title">Ιστορικό</h1><p>ISO, λήψεις, εγκαταστάσεις και USB. Οι καταγραφές διατηρούνται όταν κλείνεις την εφαρμογή.</p></div></header><div id="history-list" class="studio-grid"></div></section>
+    <section id="tools" data-studio-page hidden aria-labelledby="tools-title"><header class="intro"><div><span class="library-eyebrow">ΑΠΟ ΤΗΝ ΕΙΚΟΝΑ ΣΤΟΝ ΥΠΟΛΟΓΙΣΤΗ</span><h1 id="tools-title">Δοκιμή και USB</h1><p>Δοκίμασε ένα ολοκληρωμένο ISO και ετοίμασε το μέσο εκκίνησης.</p></div><button class="secondary" id="tool-refresh" type="button">Ανανέωση ↻</button></header><label class="panel tool-image">Ολοκληρωμένο ISO<select id="tool-iso"><option value="">Επίλεξε ISO</option></select></label><div class="studio-grid"><section class="panel"><h2>Δοκιμή σε εικονική μηχανή</h2><p id="vm-help" class="studio-help"></p><label>Μνήμη RAM (MB)<input id="vm-memory" type="number" min="512" max="8192" step="256" value="2048"></label><div class="studio-actions"><button id="vm-start" data-operation class="primary" type="button">Δοκιμή τώρα</button><button id="vm-stop" class="secondary" type="button" disabled>Τερματισμός δοκιμής</button></div><pre id="vm-status" class="studio-log"></pre></section><section class="panel"><h2>Δημιουργία bootable USB</h2><p id="usb-help" class="studio-help"></p><label>Αφαιρούμενος δίσκος<select id="usb-device"><option value="">Επίλεξε USB</option></select></label><p class="usb-warning">Η εγγραφή διαγράφει τα δεδομένα του επιλεγμένου USB. Έλεγξε συσκευή, μοντέλο και χωρητικότητα.</p><label><span id="usb-confirm-label">Πληκτρολόγησε ΔΙΑΓΡΑΦΗ /dev/…</span><input id="usb-confirm" type="text" autocomplete="off" spellcheck="false"></label><button id="usb-write" data-operation class="primary" type="button">Εγγραφή και επαλήθευση USB</button><div id="usb-job" hidden><p id="usb-status" role="status"></p><progress id="usb-progress" max="100" value="0" aria-label="Εγγραφή και επαλήθευση USB"></progress><details><summary>Καταγραφή USB</summary><pre id="usb-log" class="studio-log"></pre></details></div></section></div></section>
+    <section id="updates-center" data-studio-page hidden aria-labelledby="updates-center-title"><header class="intro"><div><span class="library-eyebrow">ΠΑΝΤΑ ΕΝΗΜΕΡΩΜΕΝΟ</span><h1 id="updates-center-title">Κέντρο ενημερώσεων</h1><p>Νέες εκδόσεις του Linux Studio και ενημερώσεις εφαρμογών Flatpak.</p></div></header><div class="studio-grid"><section class="panel"><h2>Linux Studio</h2><p id="center-update-version" class="studio-help"></p><p id="center-update-state" role="status"></p><label class="studio-toggle"><input type="checkbox" id="auto-update-enabled" checked> Αυτόματη εγκατάσταση όταν η εφαρμογή είναι ελεύθερη</label><p id="auto-update-detail" class="studio-help">Έλεγχος κάθε λεπτό, λήψη και επαλήθευση SHA-256 πριν την εγκατάσταση.</p><p class="studio-help">Στην εγκατεστημένη εφαρμογή η ενημέρωση εφαρμόζεται αυτόματα. Όταν εκτελείς τον πηγαίο κώδικα, διατίθεται λήψη του πακέτου.</p><div class="studio-actions"><button class="secondary" id="center-update-check" type="button">Έλεγχος τώρα</button><button class="primary" id="center-update-install" data-operation type="button">Εγκατάσταση νέας έκδοσης</button></div></section><section class="panel"><h2>Εφαρμογές Flatpak</h2><p class="studio-help">Έλεγξε και εγκατέστησε τις διαθέσιμες ενημερώσεις όλων των εγκατεστημένων εφαρμογών Flatpak. Οι εγκαταστάσεις συστήματος μπορεί να ζητήσουν δικαιώματα διαχειριστή.</p><button class="primary" id="update-all-apps" data-operation type="button">Ενημέρωση εφαρμογών</button></section></div></section>
+    <section id="manager-job" class="panel manager-job" hidden aria-labelledby="manager-title"><h2 id="manager-title">Εργασία εφαρμογών</h2><p id="manager-status" role="status"></p><details open><summary>Καταγραφή</summary><pre id="manager-log" class="studio-log"></pre></details></section>
     <section id="overview" aria-labelledby="overview-title" hidden>
       <header class="overview-hero">
         <div class="hero-content">
@@ -71,6 +84,7 @@
         </div>
         <span class="platform"><span aria-hidden="true">◈</span> Linux Live · x86-64</span>
       </header>
+      <div class="profile-save-bar"><label>Όνομα προφίλ<input id="profile-label" maxlength="80" placeholder="Το προσωπικό μου Linux"></label><button class="secondary" id="save-profile" type="button">Αποθήκευση προφίλ</button><button class="secondary" id="export-current" type="button">Εξαγωγή επιλογών</button></div>
       <nav class="wizard-nav" aria-label="Βήματα δημιουργίας ISO">
         <a href="#system" data-step="system" aria-current="step"><span>1</span><div><strong>Διανομή</strong><small>Βάση και kernel</small></div></a>
         <a href="#desktop" data-step="desktop"><span>2</span><div><strong>Περιβάλλον</strong><small>Desktop</small></div></a>
@@ -84,6 +98,7 @@
           <form id="configuration" novalidate>
             <section class="panel" id="system" data-page aria-labelledby="system-title">
               <header class="section-title"><span class="section-icon" aria-hidden="true">▦</span><div><h2 id="system-title">Βάση του ISO</h2><p>Η διανομή καθορίζει τους διαθέσιμους kernel και το εργαλείο δημιουργίας.</p></div></header>
+              <div><h3>Ξεκίνα με ένα έτοιμο πακέτο</h3><p class="studio-help">Οι εφαρμογές προσαρμόζονται στη διανομή. Μπορείς να αλλάξεις κάθε επιλογή.</p><div id="creation-presets" class="creation-presets"></div></div>
               <fieldset class="distros" id="distro-choices"><legend>Διανομή Linux</legend></fieldset>
               <div class="field-grid">
                 <label>Kernel<select name="kernel"></select><small id="kernel-package"></small></label>
@@ -100,6 +115,7 @@
                 <p class="appearance-caption">Οι προεπισκοπήσεις δείχνουν την παλέτα και τη διάταξη. Τα παράθυρα και τα μενού προσαρμόζονται στο Xfce, GNOME ή KDE που διάλεξες. Η προεπιλογή διανομής κρατά την αρχική της εμφάνιση.</p>
               </div>
               <p id="appearance-terminal" class="empty-note" hidden>Διάλεξε γραφικό περιβάλλον για να προεγκαταστήσεις θέμα.</p>
+              <section id="customization-lab" class="customization-lab"><h3>Εργαστήριο εμφάνισης</h3><label class="studio-toggle"><input type="checkbox" id="custom-enabled"> Δικές μου ρυθμίσεις πάνω στο επιλεγμένο θέμα</label><p class="studio-help">Διάλεξε θέμα από πάνω για να ενεργοποιήσεις τις πρόσθετες ρυθμίσεις. Η προεπισκόπηση δείχνει τη διάταξη και τα χρώματα· η τελική εμφάνιση προσαρμόζεται στο desktop.</p><fieldset id="custom-controls" class="field-grid" disabled><legend class="visually-hidden">Πρόσθετες ρυθμίσεις εμφάνισης</legend><label>Χρώμα έμφασης<input id="custom-accent" type="color" value="#60c8ff"></label><label>Εικονίδια<select id="custom-icons"><option value="auto">Του θέματος</option><option>Papirus</option><option>Papirus-Dark</option><option>Papirus-Light</option></select></label><label>Γραμματοσειρά<select id="custom-font"><option>Sans</option><option>DejaVu Sans</option><option>DejaVu Serif</option><option>DejaVu Sans Mono</option></select></label><label>Δείκτης ποντικιού<select id="custom-cursor"><option value="auto">Του θέματος</option><option>Adwaita</option></select></label><label>Γραμμή εργασιών<select id="custom-panel"><option value="bottom">Κάτω</option><option value="top">Πάνω</option><option value="dock">Συμπαγές dock</option></select></label><label>Ταπετσαρία από τα αρχεία σου<select id="custom-wallpaper"><option value="">Χρώματα θέματος</option></select></label></fieldset><div id="desktop-live-preview" class="desktop-live-preview" aria-label="Ενδεικτική προεπισκόπηση εμφάνισης"><img id="preview-wallpaper" alt="Προεπισκόπηση ταπετσαρίας" hidden><div class="preview-window"><span>Linux Studio</span><strong>Το δικό σου Linux.</strong><small id="preview-font"></small><svg width="140" height="28" aria-hidden="true"><rect id="preview-accent" width="140" height="28" rx="7" fill="#60c8ff"/></svg></div><div class="preview-panel">⊞　▣　◉　◇ <span>12:00</span></div></div></section>
             </section>
             <section class="panel" id="regional" data-page aria-labelledby="regional-title" hidden>
               <header class="section-title"><span class="section-icon" aria-hidden="true">◎</span><div><h2 id="regional-title">Γλώσσα και πληκτρολόγιο</h2><p>Ρύθμισε τις προεπιλογές που θα χρησιμοποιεί η εικόνα Live.</p></div></header>
@@ -116,6 +132,7 @@
                 <label class="extra"><input type="checkbox" name="installer"><span>Debian Installer<small>Πρόσθεσε την επιλογή εγκατάστασης στον δίσκο στο μενού εκκίνησης.</small></span></label>
               </div>
               <p class="empty-note" id="installation-note" hidden>Το προφίλ αυτής της διανομής χρησιμοποιεί τις προεπιλεγμένες επιλογές της για το Live ISO.</p>
+              <section class="personal-files"><h3>Προσωπικά αρχεία στο ISO</h3><p class="studio-help">Πρόσθεσε wallpapers, έγγραφα και δικά σου αρχεία. Θα βρίσκονται στον φάκελο <strong>LinuxStudio</strong> του νέου χρήστη. Έως 30 αρχεία, 8 MB ανά αρχείο και 20 MB συνολικά. PNG/JPEG μπορούν να χρησιμοποιηθούν ως ταπετσαρία στο Εργαστήριο εμφάνισης.</p><label class="secondary file-upload">Προσθήκη αρχείων<input id="personal-files" type="file" multiple></label><ul id="personal-file-list"></ul></section>
             </section>
           </form>
           <section class="panel" id="summary" data-page aria-labelledby="summary-title" hidden>
@@ -128,6 +145,7 @@
               <div><dt>Firmware</dt><dd id="review-firmware"></dd></div>
               <div><dt>Εγκατάσταση</dt><dd id="review-installer"></dd></div>
             </dl>
+            <div class="preflight"><h3>Έλεγχος πριν τη δημιουργία</h3><p class="studio-help">Εργαλεία, διαθέσιμος χώρος, μνήμη και σύνδεση. Ο βασικός έλεγχος εκτελείται ξανά πριν ξεκινήσει η δημιουργία.</p><button type="button" class="secondary" id="preflight-check">Έλεγχος ετοιμότητας</button><div id="preflight-results" role="status"></div></div>
           </section>
           <section class="panel build-result" id="build-result" hidden aria-labelledby="build-title">
             <header class="section-title"><span class="section-icon" aria-hidden="true">›_</span><div><h2 id="build-title">Καταγραφή δημιουργίας</h2><p id="build-status" role="status"></p></div></header>

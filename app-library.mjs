@@ -186,7 +186,10 @@ export function initAppLibrary({ onBusy }) {
       for (const id of installed) selected.delete(id);
       $('library-host-title').textContent = host.distro || 'Ο υπολογιστής σου';
       $('library-host-status').textContent = host.message;
-      if (reconnect && host.latestJob) void follow(host.latestJob);
+      if (reconnect && host.latestJob) {
+        const job = await api(`/api/apps/jobs/${host.latestJob}`);
+        if (!job.action || job.action === 'install') void follow(host.latestJob);
+      }
     } catch (error) {
       host = null;
       $('library-host-status').textContent = error.message;

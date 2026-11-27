@@ -1,4 +1,5 @@
 import { appearanceSetup } from './desktop-appearance.mjs';
+import { personalFilesSetup } from './studio-customization.mjs';
 
 const ubuntuDesktops = {
   standard: [],
@@ -7,7 +8,7 @@ const ubuntuDesktops = {
   kde: ['kde-plasma-desktop', 'sddm', 'xorg'],
 };
 
-export function buildUbuntu({ name, kernel, desktop, language, keyboard, firmware, packages, appearance = 'default' }) {
+export function buildUbuntu({ name, kernel, desktop, language, keyboard, firmware, packages, appearance = 'default', files, customization }) {
   const live = [
     'casper', 'systemd-sysv', 'systemd-resolved', 'sudo', 'locales', 'console-setup', 'network-manager',
     kernel, ...(firmware ? ['linux-firmware'] : []), ...ubuntuDesktops[desktop], ...packages,
@@ -46,7 +47,8 @@ apt-get update
 apt-get install -y --no-install-recommends ${live.join(' ')}
 systemctl enable NetworkManager.service systemd-resolved.service
 ${sessionSetup[desktop]}
-${appearanceSetup(desktop, appearance)}
+${appearanceSetup(desktop, appearance, '', customization)}
+${personalFilesSetup(files, '', customization?.wallpaper)}
 ${desktop === 'gnome' && appearance !== 'default' ? 'glib-compile-schemas --strict /usr/share/glib-2.0/schemas' : ''}
 printf '%s UTF-8\\n' '${language}' > /etc/locale.gen
 locale-gen
@@ -82,7 +84,7 @@ rm -rf --one-file-system -- rootfs media
 BUILD_UBUNTU`;
 }
 
-export function buildArch({ name, kernel, desktop, language, keyboard, packages, appearance = 'default' }) {
+export function buildArch({ name, kernel, desktop, language, keyboard, packages, appearance = 'default', files, customization }) {
   const withDesktop = desktop === 'xfce';
   const localeDefinitions = language === 'en_US.UTF-8'
     ? 'en_US.UTF-8 UTF-8'
@@ -140,7 +142,8 @@ LOCALES
 printf '%s\\n' 'KEYMAP=${keyboard === 'gr' ? 'gr' : 'us'}' > "$target/etc/vconsole.conf"
 ${enableMultilib}
 ${graphicalSetup}${packages.length ? `printf '%s\\n' ${packages.join(' ')} >> profile/packages.x86_64\n` : ''}
-${appearanceSetup(desktop, appearance, 'profile/airootfs')}
+${appearanceSetup(desktop, appearance, 'profile/airootfs', customization)}
+${personalFilesSetup(files, 'profile/airootfs', customization?.wallpaper)}
 sort -u -o profile/packages.x86_64 profile/packages.x86_64
 as_root /bin/bash -euo pipefail <<'BUILD_ARCH'
 mkarchiso -v -w arch-work -o staging profile
@@ -159,7 +162,7 @@ const fedoraDesktops = {
   kde: '@kde-desktop',
 };
 
-export function buildFedora({ name, kernel, desktop, language, keyboard, packages, distro, appearance = 'default' }) {
+export function buildFedora({ name, kernel, desktop, language, keyboard, packages, distro, appearance = 'default', files, customization }) {
   const graphical = desktop !== 'standard';
   const desktopSetup = graphical
     ? `sed -i 's/^livesys_session=.*/livesys_session="${desktop}"/' /etc/sysconfig/livesys`
@@ -198,7 +201,8 @@ ${installed.join('\n')}
 
 %post --erroronfail
 ${desktopSetup}
-${appearanceSetup(desktop, appearance)}
+${appearanceSetup(desktop, appearance, '', customization)}
+${personalFilesSetup(files, '', customization?.wallpaper)}
 ${desktop === 'gnome' && appearance !== 'default' ? 'glib-compile-schemas --strict /usr/share/glib-2.0/schemas' : ''}
 truncate -s 0 /etc/machine-id
 %end`;

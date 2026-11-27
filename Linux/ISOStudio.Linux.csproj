@@ -5,7 +5,7 @@
 	<Nullable>enable</Nullable>
 	<ImplicitUsings>enable</ImplicitUsings>
 	<AssemblyName>ISOStudio</AssemblyName>
-	<Version>0.6.0</Version>
+	<Version>0.7.0</Version>
 	<RootNamespace>ISOStudio.Linux</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
@@ -16,5 +16,6 @@
     <Content Include="launch.mjs" Link="app/Linux/launch.mjs"
              CopyToOutputDirectory="PreserveNewest"
              CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../assets/*.svg" Link="app/assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
   </ItemGroup>
 </Project>

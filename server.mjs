@@ -9,6 +9,9 @@ import { pipeline } from 'node:stream/promises';
 import { fileURLToPath } from 'node:url';
 import { catalog } from './catalog.mjs';
 import { createAppInstaller } from './app-installer.mjs';
+import { createStudioStore } from './studio-store.mjs';
+import { createAutoUpdates } from './auto-updates.mjs';
+import { checkPreflight, createVmService, listUsbDisks, writeUsb, verifyIso, isoHash } from './studio-tools.mjs';
 import { makeRecipe } from './recipe.mjs';
 import { createUpdater } from './updates.mjs';
 import { buildInWsl, inspectWsl, inspectWslDistro, runLogged, runToolSetup, setupWsl } from './wsl-build.mjs';
@@ -27,7 +30,23 @@ const linuxApp = join(isAbsolute(dataHome ?? '') ? dataHome : join(homedir(), '.
 const installed = process.platform === 'linux' ? process.getuid() !== 0 && resolve(root) === await realpath(linuxApp).catch(() => null)
   : process.platform === 'win32' && process.env.LINUX_STUDIO_WINDOWS_SETUP === '1';
 const updater = createUpdater({ directory: join(dirname(appearance), 'updates'), installed });
-const appInstaller = createAppInstaller();
+const store = createStudioStore(join(dirname(appearance), 'studio'));
+const appInstaller = createAppInstaller({ onComplete: entry => store.record(entry) });
+const vm = createVmService();
+const autoUpdates = createAutoUpdates({ file: join(dirname(appearance), 'auto-updates.json'), updater,
+  busy: occupied, install: async () => {
+    if (occupied()) return;
+    applyingUpdate = true;
+    try {
+      if (await updater.install()) {
+        if (windows) console.log('Linux Studio · update-started');
+        else if (installed && process.send) process.send({ restart: true });
+      }
+    }
+    finally { applyingUpdate = false; }
+  },
+});
+await autoUpdates.load();
 let applyingUpdate = false;
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
@@ -37,9 +56,17 @@ const assets = new Map([
   ['/desktop-appearance.mjs', ['desktop-appearance.mjs', 'text/javascript; charset=utf-8']],
   ['/linux-apps.mjs', ['linux-apps.mjs', 'text/javascript; charset=utf-8']],
   ['/app-library.mjs', ['app-library.mjs', 'text/javascript; charset=utf-8']],
+  ['/studio-ui.mjs', ['studio-ui.mjs', 'text/javascript; charset=utf-8']],
+  ['/studio-customization.mjs', ['studio-customization.mjs', 'text/javascript; charset=utf-8']],
+  ['/logo.svg', ['assets/linux-studio-logo.svg', 'image/svg+xml']],
 ]);
 const jobs = new Map();
 let latestJob;
+for (const entry of (await store.list()).history) {
+  if (entry.kind === 'build' && /^[a-f\d-]{36}$/.test(entry.id) && /^[a-z\d-]+\.iso$/.test(entry.filename || '')) {
+    jobs.set(entry.id, { ...entry, directory: join(builds, entry.id), state: entry.state === 'running' ? 'interrupted' : entry.state });
+  }
+}
 
 async function executable(name) {
   const folders = (process.env.PATH ?? '').split(delimiter).filter(Boolean);
@@ -89,7 +116,7 @@ function json(response, status, data) {
   response.end(JSON.stringify(data));
 }
 
-async function readJson(request) {
+async function readJson(request, maximum = 4096) {
   if (request.headers['content-type'] !== 'application/json') {
     throw new Error('Απαιτείται διαμόρφωση JSON.');
   }
@@ -97,7 +124,7 @@ async function readJson(request) {
   let size = 0;
   for await (const chunk of request.iterator({ destroyOnReturn: false })) {
     size += chunk.length;
-    if (size > 4096) {
+    if (size > maximum) {
       request.resume();
       throw new Error('Η διαμόρφωση είναι πολύ μεγάλη.');
     }
@@ -147,20 +174,22 @@ async function runJob(job, recipe, environment) {
       await handle.close();
     }
     job.bytes = file.size;
+    append(job, '\nΥπολογισμός SHA-256…\n');
+    job.sha256 = await isoHash(output);
     job.state = 'ready';
   } catch (error) {
     append(job, `\n${error.message}\n`);
     job.state = 'failed';
-  }
+  } finally { await store.record({ ...job, directory: undefined }).catch(error => append(job, `\nΙστορικό: ${error.message}\n`)); }
 }
 
 function occupied() {
-  return applyingUpdate || appInstaller.active() || jobs.get(latestJob)?.state === 'running';
+  return applyingUpdate || vm.active() || appInstaller.active() || jobs.get(latestJob)?.state === 'running';
 }
 
 function createJob(kind, filename) {
   const id = randomUUID();
-  const job = { id, kind, directory: join(builds, id), state: 'running', log: '', filename };
+  const job = { id, kind, directory: join(builds, id), createdAt: new Date().toISOString(), state: 'running', log: '', filename };
   jobs.set(id, job);
   latestJob = id;
   return job;
@@ -176,13 +205,13 @@ async function runSetup(job, distro, environment) {
   } catch (error) {
     append(job, `\n${error.message}\n`);
     job.state = 'failed';
-  }
+  } finally { await store.record({ ...job, directory: undefined }).catch(() => {}); }
 }
 
 const server = createServer(async (request, response) => {
   response.setHeader('Cache-Control', 'no-store');
   response.setHeader('X-Content-Type-Options', 'nosniff');
-  response.setHeader('Content-Security-Policy', "default-src 'self'; frame-ancestors 'none'; base-uri 'none'");
+  response.setHeader('Content-Security-Policy', "default-src 'self'; img-src 'self' data:; frame-ancestors 'none'; base-uri 'none'");
 
   const hosts = [`127.0.0.1:${server.address().port}`, `localhost:${server.address().port}`];
   const host = request.headers.host;
@@ -204,10 +233,23 @@ const server = createServer(async (request, response) => {
         const statuses = Object.fromEntries(await Promise.all(catalog.distros.map(async distro => [
           distro.id, await getStatus(distro, entries),
         ])));
-        return json(response, 200, { statuses, latestJob });
+        return json(response, 200, { statuses, latestJob: ['build', 'setup'].includes(jobs.get(latestJob)?.kind) ? latestJob : undefined, busy: occupied(), toolJob: jobs.get(latestJob)?.kind === 'usb' ? latestJob : undefined });
       }
-      if (path === '/api/update') return json(response, 200, updater.info());
+      if (path === '/api/update') return json(response, 200, { ...updater.info(), restartAutomatic: installed && (windows || Boolean(process.send)) });
+      if (path === '/api/update/settings') return json(response, 200, autoUpdates.info());
       if (path === '/api/apps/status') return json(response, 200, await appInstaller.inspect());
+      if (path === '/api/apps/installed') return json(response, 200, { apps: await appInstaller.inventory(), platform: process.platform });
+      if (path === '/api/profiles' || path === '/api/history') {
+        const data = await store.list();
+        return json(response, 200, path === '/api/profiles' ? data.profiles : data.history.map(entry => ({ ...entry, state: entry.state === 'running' && jobs.get(entry.id)?.state !== 'running' && appInstaller.job(entry.id)?.state !== 'running' ? 'interrupted' : entry.state })));
+      }
+      const storedMatch = /^\/api\/(profiles|history)\/([a-f\d-]{36})$/.exec(path);
+      if (storedMatch) {
+        const data = storedMatch[1] === 'profiles' ? await store.profile(storedMatch[2]) : await store.history(storedMatch[2]);
+        return data ? json(response, 200, data) : json(response, 404, { error: 'Η καταχώριση δεν βρέθηκε.' });
+      }
+      if (path === '/api/vm') return json(response, 200, await vm.status());
+      if (path === '/api/usb') return json(response, 200, await listUsbDisks());
       const appJobMatch = /^\/api\/apps\/jobs\/([a-f0-9-]+)$/.exec(path);
       if (appJobMatch) {
         const job = appInstaller.job(appJobMatch[1]);
@@ -234,8 +276,8 @@ const server = createServer(async (request, response) => {
       const match = /^\/api\/builds\/([a-f0-9-]+)(\/iso)?$/.exec(path);
       const job = match && jobs.get(match[1]);
       if (job && !match[2]) {
-        const { id, kind, state, log, filename, bytes } = job;
-        return json(response, 200, { id, kind, state, log, filename, bytes });
+        const { id, kind, state, log, filename, bytes, sha256 } = job;
+        return json(response, 200, { id, kind, state, log, filename, bytes, sha256 });
       }
       if (job?.kind === 'build' && job.state === 'ready' && match[2]) {
         const filePath = join(job.directory, job.filename);
@@ -248,6 +290,61 @@ const server = createServer(async (request, response) => {
         await pipeline(createReadStream(filePath), response);
         return;
       }
+    }
+    if (request.method === 'POST' && path === '/api/update/settings') {
+      const { enabled } = await readJson(request);
+      await autoUpdates.save(enabled);
+      return json(response, 200, autoUpdates.info());
+    }
+    if (request.method === 'POST' && path === '/api/profiles') {
+      try {
+        const options = await readJson(request, 32 * 1024 ** 2);
+        const profile = await store.saveProfile(options.label, options.options, options.id);
+        return json(response, 200, profile);
+      } catch (error) { return json(response, 400, { error: error.message }); }
+    }
+    if (request.method === 'POST' && path === '/api/profiles/delete') {
+      const { id } = await readJson(request);
+      await store.deleteProfile(id);
+      return json(response, 200, { deleted: true });
+    }
+    if (request.method === 'POST' && path === '/api/preflight') {
+      try {
+        const options = await readJson(request, 32 * 1024 ** 2);
+        makeRecipe(options);
+        const distro = catalog.distros.find(item => item.id === options.distro);
+        const environment = await getStatus(distro, windows ? await inspectWsl() : undefined);
+        return json(response, 200, await checkPreflight(builds, options, environment));
+      } catch (error) { return json(response, 400, { error: error.message }); }
+    }
+    if (request.method === 'POST' && ['/api/apps/manage', '/api/apps/launch'].includes(path)) {
+      try {
+        const options = await readJson(request, 64 * 1024);
+        if (occupied()) return json(response, 409, { error: 'Περίμενε να ολοκληρωθεί η τρέχουσα εργασία.' });
+        if (path === '/api/apps/launch') { await appInstaller.launch(options.id, options.scope); return json(response, 200, { launched: true }); }
+        return json(response, 202, { id: appInstaller.startAction(options.action, options.apps) });
+      } catch (error) { return json(response, 400, { error: error.message }); }
+    }
+    if (request.method === 'POST' && path === '/api/vm/stop') { vm.stop(); return json(response, 200, await vm.status()); }
+    if (request.method === 'POST' && ['/api/vm/start', '/api/usb/write'].includes(path)) {
+      try {
+        const options = await readJson(request);
+        if (occupied()) return json(response, 409, { error: 'Περίμενε να ολοκληρωθεί η τρέχουσα εργασία.' });
+        const image = jobs.get(options.id);
+        if (!image || image.kind !== 'build' || image.state !== 'ready') throw new Error('Επίλεξε ολοκληρωμένο ISO από το ιστορικό.');
+        const source = join(image.directory, image.filename);
+        await verifyIso(source);
+        if (path === '/api/vm/start') return json(response, 200, await vm.start(source, options.memory));
+        if (occupied()) return json(response, 409, { error: 'Υπάρχει ήδη εργασία σε εξέλιξη.' });
+        const job = createJob('usb');
+        await store.record({ ...job, directory: undefined });
+        void (async () => {
+          try { await writeUsb(source, options, value => append(job, value)); job.state = 'ready'; }
+          catch (error) { append(job, error.message); job.state = 'failed'; }
+          finally { await store.record({ ...job, directory: undefined }).catch(() => {}); }
+        })();
+        return json(response, 202, { id: job.id });
+      } catch (error) { return json(response, 400, { error: error.message }); }
     }
     if (request.method === 'POST' && path === '/api/apps/install') {
       let options;
@@ -270,8 +367,9 @@ const server = createServer(async (request, response) => {
       applyingUpdate = true;
       try {
         if (!(await updater.install())) return json(response, 409, { error: 'Η εγκατάσταση της ενημέρωσης δεν είναι διαθέσιμη.' });
-        json(response, 200, updater.info());
+        json(response, 200, { ...updater.info(), restartAutomatic: installed && (windows || Boolean(process.send)) });
         if (process.platform === 'win32') console.log('Linux Studio · update-started');
+        else if (installed && process.send) setTimeout(() => process.send?.({ restart: true }), 300);
         return;
       } catch (error) {
         return json(response, 500, { error: error.message });
@@ -302,7 +400,7 @@ const server = createServer(async (request, response) => {
       let options;
       let recipe;
       try {
-        options = await readJson(request);
+        options = await readJson(request, 32 * 1024 ** 2);
         if (path === '/api/builds') recipe = makeRecipe(options);
       } catch (error) {
         return json(response, 400, { error: error.message });
@@ -323,6 +421,9 @@ const server = createServer(async (request, response) => {
         return json(response, 202, { id: job.id });
       }
       if (!builder.available) return json(response, 503, { error: builder.message });
+      const preflight = await checkPreflight(builds, options, builder);
+      if (!preflight.ready) return json(response, 409, { error: preflight.checks.filter(check => check.state === 'error').map(check => check.detail).join(' ') });
+      if (occupied()) return json(response, 409, { error: 'Υπάρχει ήδη εργασία σε εξέλιξη.' });
       if (!windows && builder.authentication !== 'root' && spawnSync('sudo', ['-n', 'true'], { stdio: 'ignore', timeout: 2500 }).status === 0) {
         builder.authentication = 'sudo';
       } else if (builder.authentication === 'sudo') {
@@ -331,6 +432,8 @@ const server = createServer(async (request, response) => {
         });
       }
       const job = createJob('build', recipe.filename);
+      job.options = options;
+      await store.record({ ...job, directory: undefined });
       void runJob(job, recipe, builder);
       return json(response, 202, { id: job.id });
     }
@@ -346,5 +449,11 @@ server.listen(port, '127.0.0.1', () => {
   console.log(`Linux Studio · http://127.0.0.1:${server.address().port}`);
   process.send?.({ port: server.address().port });
 });
+
+const updateClock = setInterval(() => void autoUpdates.tick(), 60_000);
+updateClock.unref();
+void autoUpdates.tick();
+server.once('close', () => { clearInterval(updateClock); vm.stop(); });
+process.once('exit', () => vm.stop());
 
 if (process.send) process.once('disconnect', () => process.exit());

@@ -13,8 +13,14 @@ export const palettes = {
   midnight: { dark: true, background: '#070c18', surface: '#111c32', text: '#dbeafe', accent: '#38bdf8', secondary: '#1e3a5f' },
 };
 
-export function appearancePackages(distro, desktop, appearance) {
+export function appearancePackages(distro, desktop, appearance, customization) {
   if (appearance === 'default') return [];
+  if (customization) return [...new Set([...appearancePackages(distro, desktop, appearance),
+    ...(customization.icons !== 'auto' ? ['papirus-icon-theme'] : []),
+    distro === 'arch' ? 'ttf-dejavu' : distro === 'fedora' ? 'dejavu-sans-fonts' : 'fonts-dejavu-core',
+    ...(distro === 'fedora' ? ['dejavu-serif-fonts', 'dejavu-sans-mono-fonts'] : []),
+    ...(customization.cursor === 'Adwaita' ? [distro === 'arch' ? 'adwaita-cursors' : distro === 'fedora' ? 'adwaita-cursor-theme' : 'adwaita-icon-theme'] : []),
+  ])];
   if (desktop === 'xfce') return [
     distro === 'arch' ? 'arc-gtk-theme' : 'arc-theme',
     'papirus-icon-theme', 'xfce4-whiskermenu-plugin',
@@ -87,8 +93,7 @@ function xfceFiles(dark) {
   };
 }
 
-function kdeFiles(dark, appearance) {
-  const palette = palettes[appearance];
+function kdeFiles(dark, appearance, palette = palettes[appearance]) {
   return {
     '/etc/skel/.config/kdeglobals': `[General]
 ColorScheme=LinuxStudio-${appearance}
@@ -163,8 +168,7 @@ touch "$state/appearance-applied"
   };
 }
 
-function gnomeFiles(dark, appearance) {
-  const palette = palettes[appearance];
+function gnomeFiles(dark, appearance, palette = palettes[appearance]) {
   return {
     '/etc/skel/.config/autostart/linux-studio-gnome.desktop': `[Desktop Entry]
 Type=Application
@@ -258,14 +262,15 @@ button:checked, selection, row:selected { background-color: ${palette.accent}; c
 `;
 }
 
-export function appearanceFiles(desktop, appearance) {
+export function appearanceFiles(desktop, appearance, customization) {
   if (appearance === 'default') return {};
-  const palette = palettes[appearance];
+  const base = palettes[appearance];
+  const palette = base && { ...base, ...(customization ? { accent: customization.accent } : {}) };
   if (!palette) throw new Error('Άγνωστο θέμα εμφάνισης.');
   const { dark } = palette;
   const generators = { xfce: xfceFiles, kde: kdeFiles, gnome: gnomeFiles };
   if (!generators[desktop]) throw new Error('Τα θέματα χρειάζονται γραφικό περιβάλλον.');
-  const files = generators[desktop](dark, appearance);
+  const files = generators[desktop](dark, appearance, palette);
   files['/etc/skel/.config/gtk-3.0/gtk.css'] = gtkStyle(palette);
   files['/etc/skel/.config/gtk-4.0/gtk.css'] = gtkStyle(palette);
   if (desktop === 'kde') {
@@ -299,11 +304,57 @@ mkdir -p "$state"
 touch "$state/appearance-applied"
 `;
   }
+  if (customization) customize(files, desktop, dark, customization);
   return files;
 }
 
-export function appearanceSetup(desktop, appearance, prefix = '') {
-  return Object.entries(appearanceFiles(desktop, appearance)).map(([path, content], index) => {
+function customize(files, desktop, dark, c) {
+  const icon = c.icons === 'auto' ? null : c.icons;
+  const wallpaper = '/usr/share/backgrounds/linux-studio-wallpaper';
+  if (desktop === 'xfce') {
+    const key = '/etc/skel/.config/xfce4/xfconf/xfce-perchannel-xml/';
+    files[key + 'xsettings.xml'] = files[key + 'xsettings.xml'].replace('value="Sans 10"', `value="${c.font} 10"`)
+      .replace('<property name="Gtk" type="empty">', `<property name="Gtk" type="empty">${c.cursor === 'auto' ? '' : `<property name="CursorThemeName" type="string" value="${c.cursor}"/>`}`);
+    if (icon) files[key + 'xsettings.xml'] = files[key + 'xsettings.xml'].replace(/value="Papirus(?:-Dark|-Light)?"/, `value="${icon}"`);
+    files[key + 'xfce4-panel.xml'] = files[key + 'xfce4-panel.xml'].replace('p=10;x=0;y=0', c.panel === 'top' ? 'p=6;x=0;y=0' : 'p=10;x=0;y=0')
+      .replace('name="length" type="uint" value="100"', `name="length" type="uint" value="${c.panel === 'dock' ? 65 : 100}"`);
+    if (c.wallpaper) files['/usr/local/share/linux-studio/initial-background.sh'] = files['/usr/local/share/linux-studio/initial-background.sh']
+      .replace('-p "$base/image-style" -n -t int -s 0', '-p "$base/image-style" -n -t int -s 5')
+      .replace('  base=${path%/last-image}', `  base=\${path%/last-image}\n  xfconf-query -c xfce4-desktop -p "$path" -s '${wallpaper}'`);
+  }
+  if (desktop === 'kde') {
+    const key = '/etc/skel/.config/';
+    files[key + 'kdeglobals'] = files[key + 'kdeglobals'].replace('[General]\n', `[General]\nfont=${c.font},10,-1,5,50,0,0,0,0,0\n`);
+    if (icon) files[key + 'kdeglobals'] = files[key + 'kdeglobals'].replace(/Theme=breeze(?:-dark)?/, `Theme=${icon}`);
+    if (c.cursor !== 'auto') files[key + 'kcminputrc'] = `[Mouse]\ncursorTheme=${c.cursor}\n`;
+    files[key + 'plasma-org.kde.plasma.desktop-appletsrc'] = files[key + 'plasma-org.kde.plasma.desktop-appletsrc'].replace('location=4', `location=${c.panel === 'top' ? 3 : 4}`)
+      .replace('[Containments][2][General]\n', `[Containments][2][General]\n${c.panel === 'dock' ? 'alignment=1\nlengthMode=1\nminLength=800\nmaxLength=800\nfloating=true\n' : ''}`);
+    if (c.wallpaper) files[key + 'plasma-org.kde.plasma.desktop-appletsrc'] = files[key + 'plasma-org.kde.plasma.desktop-appletsrc']
+      .replace('wallpaperplugin=org.kde.color', 'wallpaperplugin=org.kde.image') + `\n[Containments][1][Wallpaper][org.kde.image][General]\nImage=file://${wallpaper}\nFillMode=2\n`;
+  }
+  if (desktop === 'gnome') {
+    const schema = '/usr/share/glib-2.0/schemas/90_linux-studio.gschema.override';
+    const script = '/usr/local/share/linux-studio/initial-gnome.sh';
+    files[schema] = files[schema].replace('[org.gnome.desktop.interface]\n', `[org.gnome.desktop.interface]\nfont-name='${c.font} 10'\n${c.cursor !== 'auto' ? `cursor-theme='${c.cursor}'\n` : ''}`);
+    let extra = `gsettings set org.gnome.desktop.interface font-name '${c.font} 10'\n`;
+    if (c.cursor !== 'auto') extra += `gsettings set org.gnome.desktop.interface cursor-theme '${c.cursor}'\n`;
+    if (icon) {
+      files[schema] = files[schema].replace(/icon-theme='Papirus(?:-Dark|-Light)?'/, `icon-theme='${icon}'`);
+      files[script] = files[script].replace(/icon-theme 'Papirus(?:-Dark|-Light)?'/, `icon-theme '${icon}'`);
+    }
+    const positions = JSON.stringify({ 0: c.panel === 'top' ? 'TOP' : 'BOTTOM' });
+    const lengths = JSON.stringify({ 0: c.panel === 'dock' ? 65 : 100 });
+    extra += `panel_settings() {\n  schema_dir=/usr/share/gnome-shell/extensions/dash-to-panel@jderose9.github.com/schemas\n  if [ -f "$schema_dir/gschemas.compiled" ]; then gsettings --schemadir "$schema_dir" set org.gnome.shell.extensions.dash-to-panel "$@"; else gsettings set org.gnome.shell.extensions.dash-to-panel "$@"; fi\n}\npanel_settings panel-positions '${positions}'\npanel_settings panel-lengths '${lengths}'\n`;
+    if (c.wallpaper) {
+      files[schema] = files[schema].replace(/picture-uri(?:-dark)?=''/g, match => match.replace("''", `'file://${wallpaper}'`)).replace("picture-options='none'", "picture-options='zoom'");
+      files[script] = files[script].replace(/picture-uri(?:-dark)? ''/g, match => match.replace("''", `'file://${wallpaper}'`)).replace("picture-options 'none'", "picture-options 'zoom'");
+    }
+    files[script] = files[script].replace('mkdir -p "$state"', extra + 'mkdir -p "$state"');
+  }
+}
+
+export function appearanceSetup(desktop, appearance, prefix = '', customization) {
+  return Object.entries(appearanceFiles(desktop, appearance, customization)).map(([path, content], index) => {
     const destination = prefix + path;
     const folder = destination.slice(0, destination.lastIndexOf('/'));
     const delimiter = `STUDIO_APPEARANCE_${index}`;

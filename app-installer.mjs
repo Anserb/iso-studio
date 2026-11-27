@@ -75,7 +75,7 @@ export function runAppCommand(command, args, { log = () => {}, timeout = 30 * 60
 
 export function createAppInstaller({ platform = process.platform, uid = () => process.getuid?.(),
   find = findExecutable, run = runAppCommand,
-  readOs = () => readFile('/etc/os-release', 'utf8').catch(() => '') } = {}) {
+  readOs = () => readFile('/etc/os-release', 'utf8').catch(() => ''), onComplete = async () => {} } = {}) {
   let latest;
   const jobs = new Map();
   const active = () => latest?.state === 'running';
@@ -156,7 +156,7 @@ export function createAppInstaller({ platform = process.platform, uid = () => pr
       job.error = error.message;
       log(`\n${error.message}\n`);
       job.state = 'failed';
-    } finally { job.current = null; }
+    } finally { job.current = null; await onComplete({ ...job, kind: 'applications', createdAt: job.createdAt }).catch(() => {}); }
   }
 
   // Validation and reservation happen synchronously, before any await.
@@ -164,12 +164,77 @@ export function createAppInstaller({ platform = process.platform, uid = () => pr
     const apps = validateApps(ids);
     if (platform !== 'linux' || uid() === 0) throw new Error('Η εγκατάσταση απαιτεί Linux Studio σε Linux ως κανονικό χρήστη.');
     if (active()) throw new Error('Μια εγκατάσταση βρίσκεται ήδη σε εξέλιξη.');
-    latest = { id: randomUUID(), apps, state: 'running', current: null, results: [], log: '' };
+    latest = { id: randomUUID(), apps, action: 'install', createdAt: new Date().toISOString(), state: 'running', current: null, results: [], log: '' };
     jobs.set(latest.id, latest);
     if (jobs.size > 20) jobs.delete(jobs.keys().next().value);
+    void onComplete({ ...latest, kind: 'applications' }).catch(() => {});
     void execute(latest);
     return latest.id;
   }
 
-  return { inspect, start, active, job: id => jobs.get(id) };
+  async function inventory() {
+    if (platform !== 'linux' || uid() === 0) return [];
+    const flatpak = await find('flatpak');
+    if (!flatpak) return [];
+    const output = await run(flatpak, ['list', '--app', '--columns=application,name,installation'], { timeout: 20_000 });
+    return output.trim().split('\n').filter(Boolean).map(line => {
+      const [id, name, installation] = line.split('\t').map(value => value.trim());
+      return { id, name: name || known.get(id)?.name || id, scope: installation === 'user' ? 'user' : 'system' };
+    }).filter(app => /^[A-Za-z][\w-]*(?:\.[\w-]+){2,}$/.test(app.id));
+  }
+
+  async function executeAction(job, requested) {
+    const log = value => { job.log = (job.log + value).slice(-32_768); };
+    try {
+      const flatpak = await find('flatpak');
+      if (!flatpak) throw new Error('Δεν βρέθηκε Flatpak.');
+      const installed = await inventory();
+      const targets = job.action === 'update-all' ? installed : requested.map(item => {
+        const found = installed.find(app => app.id === item.id && app.scope === item.scope);
+        if (!found) throw new Error('Η επιλεγμένη εφαρμογή δεν είναι εγκατεστημένη σε αυτό το προφίλ.');
+        return found;
+      });
+      job.apps = targets.map(app => app.id);
+      for (const app of targets) {
+        job.current = app.id;
+        log(`\n── ${app.name} (${app.scope}) ──\n`);
+        try {
+          const command = job.action === 'uninstall' ? 'uninstall' : 'update';
+          await run(flatpak, [command, `--${app.scope}`, '--noninteractive', '--assumeyes', '--app', app.id], { log });
+          if (command === 'uninstall' && (await inventory()).some(item => item.id === app.id && item.scope === app.scope)) throw new Error('Η απεγκατάσταση δεν επιβεβαιώθηκε.');
+          job.results.push({ id: app.id, state: 'ready', scope: app.scope });
+        } catch (error) { job.results.push({ id: app.id, state: 'failed', error: error.message }); log(error.message + '\n'); }
+      }
+      job.state = job.results.some(item => item.state === 'failed') ? 'failed' : 'ready';
+    } catch (error) { job.error = error.message; log(error.message); job.state = 'failed'; }
+    finally { job.current = null; await onComplete({ ...job, kind: 'applications' }).catch(() => {}); }
+  }
+
+  function startAction(action, requested = []) {
+    if (platform !== 'linux' || uid() === 0) throw new Error('Άνοιξε το Linux Studio στο Linux ως κανονικός χρήστης.');
+    if (!['update', 'uninstall', 'update-all'].includes(action) || !Array.isArray(requested) || requested.length > 200
+      || (action !== 'update-all' && !requested.length)
+      || requested.some(item => !item || !/^[A-Za-z][\w-]*(?:\.[\w-]+){2,}$/.test(item.id) || !['user', 'system'].includes(item.scope))) throw new Error('Μη έγκυρη ενέργεια εφαρμογών.');
+    if (active()) throw new Error('Μια εργασία εφαρμογών βρίσκεται σε εξέλιξη.');
+    latest = { id: randomUUID(), apps: requested.map(item => item.id), action, createdAt: new Date().toISOString(), state: 'running', current: null, results: [], log: '' };
+    jobs.set(latest.id, latest);
+    if (jobs.size > 20) jobs.delete(jobs.keys().next().value);
+    void onComplete({ ...latest, kind: 'applications' }).catch(() => {});
+    void executeAction(latest, requested);
+    return latest.id;
+  }
+
+  async function launch(id, scope) {
+    const app = (await inventory()).find(app => app.id === id && app.scope === scope);
+    if (!app) throw new Error('Η εφαρμογή δεν βρέθηκε στις εγκατεστημένες.');
+    const flatpak = await find('flatpak');
+    await new Promise((resolve, reject) => {
+      const child = spawn(flatpak, ['run', `--${app.scope}`, app.id], { detached: true, stdio: 'ignore', shell: false });
+      const timer = setTimeout(() => { child.unref(); resolve(); }, 1200);
+      child.once('error', error => { clearTimeout(timer); reject(error); });
+      child.once('exit', code => { clearTimeout(timer); code === 0 ? resolve() : reject(new Error('Η εφαρμογή δεν άνοιξε. Έλεγξε ότι λειτουργείς σε γραφική συνεδρία Linux.')); });
+    });
+  }
+
+  return { inspect, start, startAction, inventory, launch, active, job: id => jobs.get(id) };
 }

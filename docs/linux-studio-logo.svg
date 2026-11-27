@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Linux Studio</title>
+  <desc id="desc">Three precision-cut layers form a custom Linux image, with a terminal prompt carved into the cyan top layer.</desc>
+  <defs>
+    <linearGradient id="base" x1="48" y1="28" x2="470" y2="494" gradientUnits="userSpaceOnUse"><stop stop-color="#172b48"/><stop offset="1" stop-color="#081321"/></linearGradient>
+    <linearGradient id="top" x1="120" y1="133" x2="374" y2="280" gradientUnits="userSpaceOnUse"><stop stop-color="#a8f1ff"/><stop offset=".5" stop-color="#53d4f4"/><stop offset="1" stop-color="#5289ee"/></linearGradient>
+    <linearGradient id="edge" x1="110" y1="250" x2="413" y2="388" gradientUnits="userSpaceOnUse"><stop stop-color="#66dbf3"/><stop offset="1" stop-color="#9286f7"/></linearGradient>
+  </defs>
+  <rect x="18" y="18" width="476" height="476" rx="112" fill="url(#base)"/>
+  <rect x="19" y="19" width="474" height="474" rx="111" fill="none" stroke="#8abaff" stroke-opacity=".16" stroke-width="2"/>
+  <path d="m111 300 132 77q13 8 26 0l132-77" fill="none" stroke="url(#edge)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m111 254 132 77q13 8 26 0l132-77" fill="none" stroke="url(#edge)" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m116 181 127-74q13-8 26 0l127 74q20 12 0 24l-127 74q-13 8-26 0l-127-74q-20-12 0-24Z" fill="url(#top)"/>
+  <path d="m201 159 44 26q9 5 0 10l-44 26" fill="none" stroke="#10243c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m266 220 43-25" fill="none" stroke="#10243c" stroke-width="17" stroke-linecap="round"/>
+</svg>

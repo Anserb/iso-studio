@@ -7,9 +7,10 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <AssemblyName>ISOStudio</AssemblyName>
     <Product>Linux Studio</Product>
-    <Version>0.6.0</Version>
+    <Version>0.7.0</Version>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="../assets/*.svg" Link="app/assets/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <PackageReference Include="Microsoft.Web.WebView2" Version="1.0.4314.35" />
     <Content Include="../*.mjs;../index.html;../style.css"
              Link="app/%(Filename)%(Extension)"

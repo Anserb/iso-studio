@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="320" viewBox="0 0 1100 320" role="img" aria-labelledby="title">
+  <title id="title">Linux Studio — Your system. Your signature.</title>
+  <defs><linearGradient id="cyan" x2="1" y2="1"><stop stop-color="#a8f1ff"/><stop offset="1" stop-color="#5289ee"/></linearGradient></defs>
+  <rect width="1100" height="320" rx="36" fill="#0c1728"/>
+  <g transform="translate(45 32) scale(.5)">
+    <path d="m111 300 132 77q13 8 26 0l132-77m-290-46 132 77q13 8 26 0l132-77" fill="none" stroke="#8095ef" stroke-width="24" stroke-linecap="round" stroke-linejoin="round"/>
+    <path d="m116 181 127-74q13-8 26 0l127 74q20 12 0 24l-127 74q-13 8-26 0l-127-74q-20-12 0-24Z" fill="url(#cyan)"/>
+    <path d="m201 159 44 26q9 5 0 10l-44 26m65-1 43-25" fill="none" stroke="#10243c" stroke-width="17" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <text x="320" y="164" fill="#eef6ff" font-family="Segoe UI,Inter,Arial,sans-serif" font-size="87" font-weight="700" letter-spacing="-4">Linux Studio</text>
+  <text x="325" y="211" fill="#7ccfec" font-family="Segoe UI,Arial,sans-serif" font-size="23" letter-spacing="3">YOUR SYSTEM. YOUR SIGNATURE.</text>
+</svg>
