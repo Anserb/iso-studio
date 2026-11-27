@@ -32,6 +32,7 @@ const assets = new Map([
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/catalog.mjs', ['catalog.mjs', 'text/javascript; charset=utf-8']],
+  ['/desktop-appearance.mjs', ['desktop-appearance.mjs', 'text/javascript; charset=utf-8']],
 ]);
 const jobs = new Map();
 let latestJob;

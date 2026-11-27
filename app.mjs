@@ -99,6 +99,29 @@ function populateSelect(field, items) {
 }
 
 populateSelect('language', catalog.languages);
+for (const [index, appearance] of catalog.appearances.entries()) {
+  const label = document.createElement('label');
+  label.className = 'appearance-choice';
+  label.dataset.appearance = appearance.id;
+  const input = document.createElement('input');
+  Object.assign(input, { type: 'radio', name: 'appearance', value: appearance.id, checked: index === 0 });
+  const preview = document.createElement('span');
+  preview.className = 'appearance-preview';
+  preview.setAttribute('aria-hidden', 'true');
+  const window = document.createElement('span');
+  window.className = 'appearance-window';
+  window.textContent = '−  □  ×';
+  const taskbar = document.createElement('span');
+  taskbar.className = 'appearance-taskbar';
+  taskbar.textContent = '⊞   ▰  ◉';
+  preview.append(window, taskbar);
+  const title = document.createElement('strong');
+  title.textContent = appearance.name;
+  const description = document.createElement('small');
+  description.textContent = appearance.detail;
+  label.append(preview, input, title, description);
+  byId('appearance-choices').append(label);
+}
 const selectedDistro = () => catalog.distros.find(item => item.id === form.elements.distro.value);
 
 function optionInput(type, name, value) {
@@ -223,12 +246,21 @@ function configureDistro() {
 function refreshSummary() {
   const distro = selectedDistro();
   const { name, kernel, desktop, language, keyboard } = form.elements;
+  const graphical = desktop.value !== 'standard';
+  const appearanceChoices = byId('appearance-choices');
+  appearanceChoices.disabled = !graphical;
+  byId('iso-appearance').hidden = !graphical;
+  byId('appearance-terminal').hidden = graphical;
+  if (!graphical) form.elements.appearance.value = 'default';
+  const appearance = catalog.appearances.find(item => item.id === form.elements.appearance.value);
   const apps = new FormData(form).getAll('apps');
   const selected = distro.kernels.find(item => item.id === kernel.value);
   byId('kernel-package').textContent = selected.id;
   byId('summary-distro').textContent = distro.name;
   byId('summary-kernel').textContent = selected.name;
   byId('summary-desktop').textContent = catalog.desktops.find(item => item.id === desktop.value).name;
+  byId('summary-appearance').textContent = graphical ? appearance.name : 'Χωρίς γραφικό περιβάλλον';
+  byId('review-appearance').textContent = byId('summary-appearance').textContent;
   byId('summary-apps').textContent = apps.length;
   byId('filename').textContent = name.validity.valid ? isoFilename(name.value, distro.id) : '—';
   byId('review-language').textContent = language.selectedOptions[0].textContent;

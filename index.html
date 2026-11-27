@@ -18,7 +18,7 @@
       <a href="https://linuxstudio.pvgaming.uk/guide" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Οδηγός</a>
     </nav>
     <div class="sidebar-footer">
-      <span class="version">Linux Studio v0.4.0</span>
+      <span class="version">Linux Studio v0.5.0</span>
       <div class="theme-picker" role="group" aria-label="Θέμα εφαρμογής">
         <button type="button" data-theme-choice="dark" aria-pressed="true">Σκούρο</button>
         <button type="button" data-theme-choice="light" aria-pressed="false">Φωτεινό</button>
@@ -74,6 +74,13 @@
             <section class="panel" id="desktop" data-page aria-labelledby="desktop-title" hidden>
               <header class="section-title"><span class="section-icon" aria-hidden="true">◫</span><div><h2 id="desktop-title">Επιφάνεια εργασίας</h2><p>Διάλεξε το περιβάλλον που θα ανοίγει στο Live σύστημα.</p></div></header>
               <fieldset class="choices" id="desktop-choices"><legend class="visually-hidden">Γραφικό περιβάλλον</legend></fieldset>
+              <div class="iso-appearance" id="iso-appearance">
+                <h3>Προεγκατεστημένη εμφάνιση στο ISO</h3>
+                <p>Διάλεξε το θέμα που θα ανοίγει ως προεπιλογή στην πρώτη είσοδο. Όλα τα προφίλ εμφάνισης προσθέτουν κάτω γραμμή εργασιών και μενού εφαρμογών.</p>
+                <fieldset id="appearance-choices" class="appearance-choices"><legend class="visually-hidden">Θέμα του Linux ISO</legend></fieldset>
+                <p class="appearance-caption">Οι προεπισκοπήσεις δείχνουν την παλέτα και τη διάταξη. Τα παράθυρα και τα μενού προσαρμόζονται στο Xfce, GNOME ή KDE που διάλεξες. Η προεπιλογή διανομής κρατά την αρχική της εμφάνιση.</p>
+              </div>
+              <p id="appearance-terminal" class="empty-note" hidden>Διάλεξε γραφικό περιβάλλον για να προεγκαταστήσεις θέμα.</p>
             </section>
             <section class="panel" id="regional" data-page aria-labelledby="regional-title" hidden>
               <header class="section-title"><span class="section-icon" aria-hidden="true">◎</span><div><h2 id="regional-title">Γλώσσα και πληκτρολόγιο</h2><p>Ρύθμισε τις προεπιλογές που θα χρησιμοποιεί η εικόνα Live.</p></div></header>
@@ -96,6 +103,7 @@
             <header class="section-title"><span class="section-icon" aria-hidden="true">✓</span><div><h2 id="summary-title">Έλεγχος πριν τη δημιουργία</h2><p>Αυτές οι επιλογές θα περάσουν στην εικόνα Linux Live.</p></div></header>
             <dl class="review">
               <div><dt>Γλώσσα</dt><dd id="review-language"></dd></div>
+              <div><dt>Θέμα ISO</dt><dd id="review-appearance"></dd></div>
               <div><dt>Πληκτρολόγιο</dt><dd id="review-keyboard"></dd></div>
               <div><dt>Εφαρμογές</dt><dd id="review-apps"></dd></div>
               <div><dt>Firmware</dt><dd id="review-firmware"></dd></div>
@@ -120,6 +128,7 @@
             <div><dt>Διανομή</dt><dd id="summary-distro"></dd></div>
             <div><dt>Kernel</dt><dd id="summary-kernel"></dd></div>
             <div><dt>Desktop</dt><dd id="summary-desktop"></dd></div>
+            <div><dt>Θέμα ISO</dt><dd id="summary-appearance"></dd></div>
             <div><dt>Πρόσθετα πακέτα</dt><dd id="summary-apps"></dd></div>
           </dl>
           <div class="host-box">

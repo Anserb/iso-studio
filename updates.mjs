@@ -7,7 +7,7 @@ import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { promisify } from 'node:util';
 
-export const version = '0.4.1';
+export const version = '0.5.0';
 const repository = 'Anserb/iso-studio';
 const feed = `https://api.github.com/repos/${repository}/releases/latest`;
 const run = promisify(execFile);

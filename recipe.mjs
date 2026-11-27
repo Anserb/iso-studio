@@ -1,5 +1,6 @@
 import { catalog, choicesFor, isoFilename } from './catalog.mjs';
 import { buildArch, buildFedora, buildUbuntu } from './other-builders.mjs';
+import { appearancePackages, appearanceSetup } from './desktop-appearance.mjs';
 
 const select = (items, id) => items.find(item => item.id === id);
 const builders = { debian: buildDebian, arch: buildArch, fedora: buildFedora, ubuntu: buildUbuntu };
@@ -9,6 +10,7 @@ export function makeRecipe(options) {
     throw new Error('Άκυρη διαμόρφωση.');
   }
   const { name, kernel, desktop, language, keyboard, firmware, installer, apps } = options;
+  const appearance = options.appearance ?? 'default';
   if (typeof name !== 'string' || !/^[a-z0-9](?:[a-z0-9-]{0,30}[a-z0-9])?$/.test(name)) {
     throw new Error('Χρησιμοποίησε 1–32 πεζά λατινικά γράμματα, αριθμούς ή παύλες. Ξεκίνα και τελείωσε με γράμμα ή αριθμό.');
   }
@@ -20,12 +22,17 @@ export function makeRecipe(options) {
     || typeof firmware !== 'boolean' || typeof installer !== 'boolean'
     || (firmware && !distro.firmware) || (installer && !distro.installer)
     || !Array.isArray(apps) || apps.length > choices.apps.length
-    || apps.some(id => !select(choices.apps, id))) {
+    || apps.some(id => !select(choices.apps, id))
+    || !select(catalog.appearances, appearance)
+    || (desktop === 'standard' && appearance !== 'default')) {
     throw new Error('Μία ή περισσότερες επιλογές δεν είναι διαθέσιμες για αυτή τη διανομή.');
   }
-  const packages = [...new Set(apps.map(id => select(choices.apps, id).packages?.[distro.id] ?? id))];
+  const packages = [...new Set([
+    ...apps.map(id => select(choices.apps, id).packages?.[distro.id] ?? id),
+    ...appearancePackages(distro.id, desktop, appearance),
+  ])];
   const filename = isoFilename(name, distro.id);
-  const steps = builders[distro.id]({ name, kernel, desktop, language, keyboard, firmware, installer, packages, distro });
+  const steps = builders[distro.id]({ name, kernel, desktop, language, keyboard, firmware, installer, packages, distro, appearance });
   const releaseCheck = distro.release ? ` || [[ "$host_release" != '${distro.release}' ]]` : '';
   const vmCheck = distro.needsVm ? `
 if ! systemd-detect-virt --vm --quiet; then
@@ -74,7 +81,7 @@ echo "ISO ready: $output"
 ` };
 }
 
-function buildDebian({ name, kernel, desktop, language, keyboard, firmware, installer, packages }) {
+function buildDebian({ name, kernel, desktop, language, keyboard, firmware, installer, packages, appearance }) {
   const livePackages = new Set(['live-task-standard', `live-task-${desktop}`, 'locales', 'console-setup', ...packages]);
   const bootOptions = ['boot=live', 'components', `locales=${language}`, `keyboard-layouts=${keyboard}`, `hostname=${name}`];
   if (keyboard === 'us,gr') bootOptions.push('keyboard-options=grp:alt_shift_toggle');
@@ -105,6 +112,15 @@ cat > config/package-lists/studio.list.chroot <<'PACKAGES'
 ${[...livePackages].join('\n')}
 PACKAGES
 
+${appearanceSetup(desktop, appearance, 'config/includes.chroot')}
+${desktop === 'gnome' && appearance !== 'default' ? `mkdir -p config/hooks/normal
+cat > config/hooks/normal/0900-studio-appearance.hook.chroot <<'STUDIO_COMPILE_SCHEMAS'
+#!/bin/sh
+set -eu
+glib-compile-schemas --strict /usr/share/glib-2.0/schemas
+STUDIO_COMPILE_SCHEMAS
+chmod 755 config/hooks/normal/0900-studio-appearance.hook.chroot
+` : ''}
 # Keep build and cleanup in the same privileged invocation.
 as_root /bin/bash -e -c '
   cleanup() {
