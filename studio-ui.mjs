@@ -181,7 +181,11 @@ export function initStudio({ getOptions, applyOptions, onBusy, checkUpdates }) {
     $('usb-device').replaceChildren(new Option('Επίλεξε αφαιρούμενο USB', ''), ...usbDisks.map(disk => { const option = new Option(`${disk.path} · ${disk.model} · ${(disk.bytes / 1024 ** 3).toFixed(1)} GB${disk.mounted ? ' · Κάνε unmount' : ''}`, disk.path); option.disabled = disk.mounted; return option; }));
     $('usb-help').textContent = usb.message;
     $('usb-write').disabled = !usb.available || busy || otherBusy;
-    $('vm-help').textContent = vm.available ? `QEMU διαθέσιμο · Έως ${vm.maxMemory} MB RAM. Το ISO ανοίγει σε ξεχωριστό παράθυρο, χωρίς δίσκο του υπολογιστή σου.` : 'Χρειάζεται QEMU στο σύστημα. Linux: πακέτο qemu-system-x86 (Debian/Ubuntu), qemu-desktop (Arch) ή qemu-system-x86-core και qemu-ui-gtk (Fedora).';
+    $('vm-help').textContent = vm.available
+      ? `QEMU διαθέσιμο · Έως ${vm.maxMemory} MB RAM. Το ISO ανοίγει σε ξεχωριστό παράθυρο, χωρίς δίσκο του υπολογιστή σου.`
+      : (navigator.platform.startsWith('Win')
+        ? 'Χρειάζεται QEMU για Windows (qemu-system-x86_64). Η έκδοση Windows του Linux Studio εντοπίζει εγκατάσταση στο PATH ή στο C:\\Program Files\\qemu.'
+        : 'Χρειάζεται QEMU στο σύστημα. Linux: πακέτο qemu-system-x86 (Debian/Ubuntu), qemu-desktop (Arch) ή qemu-system-x86-core και qemu-ui-gtk (Fedora).');
     $('vm-memory').max = vm.maxMemory;
     if (Number($('vm-memory').value) > vm.maxMemory) $('vm-memory').value = vm.maxMemory;
     $('vm-start').disabled = !vm.available || ['running', 'starting'].includes(vm.state) || busy || otherBusy;

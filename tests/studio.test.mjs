@@ -11,7 +11,7 @@ import { appearanceFiles } from '../desktop-appearance.mjs';
 import { makeRecipe } from '../recipe.mjs';
 import { createStudioStore } from '../studio-store.mjs';
 import { validateExtras } from '../studio-customization.mjs';
-import { removableDisks } from '../studio-tools.mjs';
+import { parseWindowsUsbDisks, removableDisks } from '../studio-tools.mjs';
 
 const png = 'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+a7WQAAAAASUVORK5CYII=';
 const base = { distro: 'debian', kernel: 'linux-image-amd64', desktop: 'xfce', language: 'el_GR.UTF-8', keyboard: 'us,gr', name: 'my-linux', firmware: true, installer: false, apps: [], appearance: 'nord' };
@@ -81,6 +81,17 @@ test('history survives process restarts and restores the original configuration'
   assert.equal(entry.options.files[1].content, extras.files[1].content);
 });
 
+test('Windows USB candidates contain only PhysicalDrive USB devices with stable identity', () => {
+  const disks = parseWindowsUsbDisks(JSON.stringify([
+    { Index: 1, DeviceID: '\\\\.\\PHYSICALDRIVE1', InterfaceType: 'USB', Model: 'USB Flash Disk', SerialNumber: 'ABC123', Size: 32000000000 },
+    { Index: 0, DeviceID: '\\\\.\\PHYSICALDRIVE0', InterfaceType: 'SCSI', Model: 'NVMe SSD', SerialNumber: 'INTERNAL', Size: 512000000000 },
+  ]));
+  assert.equal(disks.length, 1);
+  assert.equal(disks[0].path, '\\\\.\\PHYSICALDRIVE1');
+  assert.equal(disks[0].identity, '1');
+  assert.equal(disks[0].serial, 'ABC123');
+});
+
 test('USB candidates exclude internal, read-only, and non-disk targets; mounted children are marked blocked', () => {
   const disk = { name: 'sdb', path: '/dev/sdb', type: 'disk', rm: true, ro: false, size: 1000, 'maj:min': '8:16', mountpoints: [], serial: 'usb' };
   const result = removableDisks({ blockdevices: [disk, { ...disk, path: '/dev/sda', rm: false }, { ...disk, path: '/dev/sdc', ro: true }, { ...disk, path: '/tmp/file' }, { ...disk, path: '/dev/sdd', children: [{ mountpoints: ['/'] }] }] });
@@ -90,7 +101,7 @@ test('USB candidates exclude internal, read-only, and non-disk targets; mounted 
   assert.equal(result[0].identity, '8:16');
 });
 
-function autoFixture(folder, { occupied = false, current = '0.7.0', tag = '0.8.0', ready = false } = {}) {
+function autoFixture(folder, { occupied = false, current = '0.8.0', tag = '0.9.0', ready = false } = {}) {
   let downloads = 0, installs = 0, state = ready ? 'ready' : 'current';
   const updater = { info: () => ({ current, version: state === 'ready' ? tag : undefined, status: state, canInstall: true }), check: async () => { downloads++; state = 'ready'; } };
   const service = createAutoUpdates({ file: join(folder, 'auto.json'), updater, busy: () => occupied,

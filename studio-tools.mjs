@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { constants, createReadStream } from 'node:fs';
-import { access, mkdir, open, readFile, stat, statfs } from 'node:fs/promises';
+import { access, mkdir, mkdtemp, open, readFile, rm, stat, statfs, writeFile } from 'node:fs/promises';
 import { freemem } from 'node:os';
 import { delimiter, join } from 'node:path';
 import { runAppCommand, parseOsRelease } from './app-installer.mjs';
@@ -12,8 +12,14 @@ export async function findTool(name) {
     try { await access(path, constants.X_OK); return path; } catch { /* Next candidate. */ }
   }
   if (process.platform === 'win32' && name === 'qemu-system-x86_64') {
-    const path = join(process.env.ProgramFiles || 'C:\\Program Files', 'qemu', name + '.exe');
-    try { await access(path); return path; } catch { /* QEMU is not installed. */ }
+    const candidates = [
+      join(process.env.ProgramFiles || 'C:\\Program Files', 'qemu', name + '.exe'),
+      join(process.env['ProgramFiles(x86)'] || 'C:\\Program Files (x86)', 'qemu', name + '.exe'),
+      join(process.env.LOCALAPPDATA || '', 'Programs', 'qemu', name + '.exe'),
+    ];
+    for (const path of candidates.filter(Boolean)) {
+      try { await access(path); return path; } catch { /* Next QEMU location. */ }
+    }
   }
   return null;
 }
@@ -61,8 +67,35 @@ export function removableDisks(tree) {
       bytes: Number(disk.size), identity: disk['maj:min'], mounted: busy(disk) }));
 }
 
+export function parseWindowsUsbDisks(output) {
+  const parsed = JSON.parse(output || '[]');
+  const drives = Array.isArray(parsed) ? parsed : [parsed];
+  return drives.filter(drive => drive && (!drive.InterfaceType || String(drive.InterfaceType).toUpperCase() === 'USB')
+    && /^\\\\\.\\PHYSICALDRIVE\d+$/.test(String(drive.DeviceID)))
+    .map(drive => ({
+      path: String(drive.DeviceID),
+      model: String(drive.Model || 'USB disk').trim(),
+      serial: String(drive.SerialNumber || '').trim(),
+      bytes: Number(drive.Size),
+      identity: String(drive.Index),
+      mounted: false,
+    })).filter(drive => Number.isSafeInteger(drive.bytes) && drive.bytes > 0);
+}
+
 export async function listUsbDisks() {
-  if (process.platform !== 'linux') return { available: false, disks: [], message: 'Η εγγραφή USB διατίθεται όταν ανοίγεις το Linux Studio στο Linux.' };
+  if (process.platform === 'win32') {
+    const powershell = await findTool('powershell');
+    if (!powershell) return { available: false, disks: [], message: 'Δεν βρέθηκε το Windows PowerShell.' };
+    try {
+      const script = `Get-CimInstance -ClassName Win32_DiskDrive -Filter \"InterfaceType='USB'\" | Select-Object Index,DeviceID,InterfaceType,Model,SerialNumber,Size | ConvertTo-Json -Compress`;
+      const output = await runAppCommand(powershell, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', script], { timeout: 15_000 });
+      const disks = parseWindowsUsbDisks(output.trim() || '[]');
+      return { available: true, disks, message: 'Εμφανίζονται μόνο USB δίσκοι των Windows. Η εγγραφή ζητά επιβεβαίωση διαχειριστή και διαγράφει ολόκληρη τη συσκευή.' };
+    } catch (error) {
+      return { available: false, disks: [], message: `Δεν ήταν δυνατή η λήψη των USB δίσκων: ${error.message}` };
+    }
+  }
+  if (process.platform !== 'linux') return { available: false, disks: [], message: 'Η εγγραφή USB δεν υποστηρίζεται σε αυτό το λειτουργικό.' };
   const lsblk = await findTool('lsblk');
   const python = await findTool('python3');
   if (!lsblk || !python) return { available: false, disks: [], message: 'Χρειάζονται lsblk (util-linux) και Python 3 για εγγραφή USB.' };
@@ -125,6 +158,85 @@ print('USB_VERIFIED', flush=True)
 
 export async function writeUsb(source, request, log) {
   const { disks, available } = await listUsbDisks();
+  if (process.platform === 'win32') {
+    const disk = disks.find(item => item.path === request.device && item.identity === request.identity && item.bytes === request.bytes && item.serial === request.serial);
+    if (!available || !disk || request.confirmation !== `ΔΙΑΓΡΑΦΗ ${disk.path}`) throw new Error('Επίλεξε ξανά τον USB δίσκο και πληκτρολόγησε την επιβεβαίωση διαγραφής.');
+    const image = await verifyIso(source);
+    if (image.size > disk.bytes) throw new Error('Το ISO δεν χωράει στο επιλεγμένο USB.');
+    const hash = await isoHash(source);
+    const powershell = await findTool('powershell');
+    if (!powershell) throw new Error('Δεν βρέθηκε το Windows PowerShell.');
+    const temporary = await mkdtemp(join(process.env.TEMP || '.', 'linux-studio-usb-'));
+    try {
+      const logPath = join(temporary, 'usb.log');
+      const scriptPath = join(temporary, 'write-usb.ps1');
+      const diskIndex = Number(disk.identity);
+      const script = `$ErrorActionPreference = 'Stop'
+$source = ${JSON.stringify(source)}
+$disk = ${JSON.stringify(disk.path)}
+$diskIndex = ${diskIndex}
+$expected = ${JSON.stringify(hash)}
+$logPath = ${JSON.stringify(logPath)}
+$expectedDrive = Get-CimInstance -ClassName Win32_DiskDrive -Filter "Index=$diskIndex" -ErrorAction Stop
+if (-not $expectedDrive -or $expectedDrive.DeviceID -ne $disk -or $expectedDrive.InterfaceType -ne 'USB') { throw 'Η USB συσκευή άλλαξε πριν την εγγραφή.' }
+if ([string]$expectedDrive.SerialNumber -ne ${JSON.stringify(disk.serial)}) { throw 'Το serial number της USB συσκευής άλλαξε.' }
+$diskpart = Join-Path $env:TEMP "linux-studio-diskpart-$([guid]::NewGuid().ToString('N')).txt"
+Set-Content -LiteralPath $diskpart -Value @("select disk $diskIndex", "attributes disk clear readonly", "clean") -Encoding ASCII
+& diskpart.exe /s $diskpart
+if ($LASTEXITCODE -ne 0) { throw 'Το diskpart απέτυχε. Επιβεβαίωσε ότι η συσκευή είναι αφαιρούμενη.' }
+Remove-Item -LiteralPath $diskpart -Force -ErrorAction SilentlyContinue
+"WRITE 0" | Set-Content -LiteralPath $logPath
+$input = [System.IO.File]::Open($source, [System.IO.FileMode]::Open, [System.IO.FileAccess]::Read, [System.IO.FileShare]::Read)
+$output = [System.IO.File]::Open($disk, [System.IO.FileMode]::Open, [System.IO.FileAccess]::ReadWrite, [System.IO.FileShare]::None)
+try {
+  $buffer = New-Object byte[] 4194304
+  $written = 0
+  $sourceHash = [System.Security.Cryptography.SHA256]::Create()
+  $outHash = [System.Security.Cryptography.SHA256]::Create()
+  while (($count = $input.Read($buffer, 0, $buffer.Length)) -gt 0) {
+    $sourceHash.TransformBlock($buffer, 0, $count, $buffer, 0) | Out-Null
+    $output.Write($buffer, 0, $count)
+    $written += $count
+    "WRITE $written $($input.Length)" | Set-Content -LiteralPath $logPath
+  }
+  $sourceHash.TransformFinalBlock([byte[]]@(), 0, 0) | Out-Null
+  $output.Flush($true)
+  $input.Dispose()
+  $input = $null
+  $output.Seek(0, [System.IO.SeekOrigin]::Begin) | Out-Null
+  $verified = 0
+  $remaining = $written
+  while ($remaining -gt 0) {
+    $count = $output.Read($buffer, 0, [Math]::Min($buffer.Length, $remaining))
+    if ($count -le 0) { throw 'Η επαλήθευση απέτυχε να διαβάσει όσα bytes γράφηκαν.' }
+    $outHash.TransformBlock($buffer, 0, $count, $buffer, 0) | Out-Null
+    $verified += $count
+    $remaining -= $count
+    "VERIFY $verified $written" | Set-Content -LiteralPath $logPath
+  }
+  $outHash.TransformFinalBlock([byte[]]@(), 0, 0) | Out-Null
+  $sourceValue = $sourceHash.Hash | ForEach-Object { $_.ToString('x2') }
+  $outputValue = $outHash.Hash | ForEach-Object { $_.ToString('x2') }
+  $sourceHashValue = -join $sourceValue
+  $outputHashValue = -join $outputValue
+  if ($sourceHashValue -ne $expected -or $outputHashValue -ne $expected) { throw 'Η επαλήθευση SHA-256 του USB απέτυχε.' }
+  "USB_VERIFIED" | Set-Content -LiteralPath $logPath
+} finally {
+  if ($input) { $input.Dispose() }
+  $output.Dispose()
+}`;
+      await writeFile(scriptPath, script, 'utf8');
+      const wrapper = `Start-Process -FilePath ${JSON.stringify(powershell)} -Verb RunAs -Wait -WindowStyle Hidden -ArgumentList @('-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File',${JSON.stringify(scriptPath)})`;
+      await runAppCommand(powershell, ['-NoProfile', '-NonInteractive', '-ExecutionPolicy', 'Bypass', '-Command', wrapper], { log, timeout: 30 * 60_000 });
+      let finalLog = '';
+      try { finalLog = await readFile(logPath, 'utf8'); } catch { /* Elevated script may not expose the log. */ }
+      if (!finalLog.includes('USB_VERIFIED')) throw new Error('Η εγγραφή δεν ολοκληρώθηκε ή δεν επιβεβαιώθηκε. Έλεγξε την επιβεβαίωση διαχειριστή και την USB συσκευή.');
+      log('USB_VERIFIED\n');
+    } finally {
+      await rm(temporary, { recursive: true, force: true }).catch(() => {});
+    }
+    return;
+  }
   const disk = disks.find(disk => disk.path === request.device && disk.identity === request.identity && disk.bytes === request.bytes && disk.serial === request.serial);
   if (!available || !disk || disk.mounted || request.confirmation !== `ΔΙΑΓΡΑΦΗ ${disk.path}`) throw new Error('Επίλεξε ξανά αφαιρούμενο USB χωρίς mounted partitions και πληκτρολόγησε την επιβεβαίωση διαγραφής.');
   const image = await verifyIso(source);
