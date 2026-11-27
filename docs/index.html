@@ -3,165 +3,108 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#090f11">
-  <meta name="description" content="Το Linux στα μέτρα σου. Διάλεξε διανομή, kernel, desktop και εφαρμογές. Δημιούργησε τη δική σου εικόνα Linux Live με το Linux Studio.">
-  <title>Linux Studio — Το Linux, όπως το φαντάζεσαι.</title>
-  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="preload" as="image" href="./images/aurora-mountains.jpg">
-  <link rel="stylesheet" href="./home.css">
-  <script src="./home.js" defer></script>
-  <link rel="icon" type="image/svg+xml" href="./linux-studio-logo.svg">
+  <meta name="theme-color" content="#071512">
+  <meta name="description" content="Δημιούργησε το δικό σου Linux Live ISO με το Linux Studio.">
+  <title>Linux Studio — Linux Live ISO Lab</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="studio.js" defer></script>
+  <script type="module" src="app-preview.mjs"></script>
 </head>
 <body>
-  <a class="skip-link" href="#main">Μετάβαση στο περιεχόμενο</a>
-  <div class="scroll-progress" aria-hidden="true"></div>
-  <header class="site-header">
-    <div class="container header-inner">
-      <a class="logo" href="./" aria-label="Linux Studio, αρχική"><img class="logo-icon" src="./linux-studio-logo.svg" alt="">Linux<span class="logo-light">Studio</span></a>
-      <nav class="desktop-nav" aria-label="Κύρια πλοήγηση">
-        <a href="#app-preview">Επισκόπηση</a><a href="#explore">Διανομές</a><a href="#support">Υποστήριξη</a><a href="./guide.html">Οδηγός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a>
-      </nav>
-      <div class="nav-actions"><a class="login-link" href="./account.html">Σύνδεση</a><a class="button button-small" href="./download.html">Λήψη <span aria-hidden="true">↗</span></a><button class="menu-toggle" aria-expanded="false" aria-controls="mobile-menu" aria-label="Μενού">☰</button></div>
-    </div>
-    <nav id="mobile-menu" class="mobile-menu container" aria-label="Πλοήγηση κινητού" hidden><a href="#app-preview">Επισκόπηση</a><a href="#explore">Διανομές</a><a href="#support">Υποστήριξη</a><a href="./guide.html">Οδηγός</a><a href="./account.html">Λογαριασμός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a></nav>
+  <canvas id="terrain" aria-hidden="true"></canvas>
+  <header class="top wrap">
+    <a class="brand" href="#home"><span class="mark" aria-hidden="true">&gt;_</span> Linux<span>Studio</span></a>
+    <nav aria-label="Κύρια πλοήγηση"><a href="#app">Εφαρμογή</a><a href="distributions.html">Διανομές</a><a href="#lab">Demo</a><a href="#download">Λήψη</a><a href="#support">Υποστήριξη</a></nav>
+    <button id="motion" class="motion" type="button" aria-pressed="false">Παύση κίνησης</button>
   </header>
-  <main id="main">
-    <section class="hero" aria-labelledby="hero-heading">
-      <img class="hero-image" src="./images/aurora-mountains.jpg" alt="" width="2200" height="1467" fetchpriority="high">
-      <div class="hero-shade"></div>
-      <div class="container hero-content">
-        <p class="eyebrow hero-enter"><span class="status-light"></span> OPEN SOURCE. OPEN POSSIBILITIES.</p>
-        <h1 id="hero-heading" class="hero-enter">Το Linux,<br>όπως το<br><em>φαντάζεσαι.</em></h1>
-        <p class="hero-description hero-enter">Η διανομή σου. Ο kernel σου. Το desktop σου.<br>Φτιάξε μια εικόνα Linux Live που ξεκινά<br class="wide-only"> από τις δικές σου επιλογές.</p>
-        <div class="hero-actions hero-enter"><a class="button" href="./download.html">Κατέβασε το Linux Studio <span aria-hidden="true">↗</span></a><a class="text-button" href="#how-it-works">Δες πώς λειτουργεί <span aria-hidden="true">↓</span></a></div>
-        <p class="hero-note hero-enter">Για Windows &amp; Linux <span>·</span> Ελεύθερο λογισμικό, με άδεια MIT</p>
+  <main id="home">
+    <section class="hero wrap">
+      <div class="intro">
+        <p class="eyebrow"><span class="light"></span> LINUX LIVE ISO LAB</p>
+        <h1>Το Linux,<br><em>στα μέτρα σου.</em></h1>
+        <p class="lead">Διάλεξε διανομή, kernel, desktop και εργαλεία ανάπτυξης. Σύνθεσε το δικό σου Live ISO με το Linux Studio.</p>
+        <div class="actions"><a class="primary" href="#lab">Δοκίμασε το demo <span aria-hidden="true">↘</span></a><a class="secondary" href="#download">Λήψη εφαρμογής <span aria-hidden="true">↓</span></a></div>
       </div>
-      <div class="hero-caption" aria-hidden="true"><span>YOUR SYSTEM.<br>YOUR DIRECTION.</span><span class="compass">↗</span></div>
-      <div class="hero-bottom container"><a href="#explore"><span class="scroll-arrow" aria-hidden="true">↓</span> Εξερεύνησε τις δυνατότητες</a><span>LINUX STUDIO / CUSTOM LIVE IMAGES</span></div>
-    </section>
-    <div class="distribution-strip"><div class="container"><span>Ξεκίνα από τη βάση σου</span><a href="#explore" data-choose="debian">Debian <i aria-hidden="true">↗</i></a><a href="#explore" data-choose="ubuntu">Ubuntu <i aria-hidden="true">↗</i></a><a href="#explore" data-choose="arch">Arch Linux <i aria-hidden="true">↗</i></a><a href="#explore" data-choose="fedora">Fedora <i aria-hidden="true">↗</i></a></div></div>
-
-    <section class="section container intro-section" aria-labelledby="intro-title">
-      <div class="section-heading reveal"><p class="eyebrow">ΧΤΙΣΜΕΝΟ ΓΥΡΩ ΑΠΟ ΕΣΕΝΑ</p><h2 id="intro-title">Το σύστημά σου.<br><span>Με τους δικούς σου όρους.</span></h2></div>
-      <div class="intro-copy reveal"><p>Το Linux Studio συγκεντρώνει τις επιλογές δημιουργίας ενός Live ISO σε μια εφαρμογή. Ξεκινάς από Debian, Ubuntu, Arch ή Fedora και ορίζεις τι θα περιλαμβάνει η εικόνα σου.</p><p>Το τελικό αρχείο <code>.iso</code> περιέχει το Linux που διαμόρφωσες. Μπορείς να το δοκιμάσεις σε εικονική μηχανή ή να το γράψεις σε USB και να εκκινήσεις από αυτό.</p><a class="inline-link" href="./features.html">Όλες οι δυνατότητες <span aria-hidden="true">↗</span></a></div>
-    </section>
-
-    <section class="section app-preview-section" id="app-preview" aria-labelledby="app-preview-title">
-      <div class="container">
-        <div class="app-preview-heading reveal"><div><p class="eyebrow">ΔΙΑΔΡΑΣΤΙΚΗ ΕΠΙΣΚΟΠΗΣΗ</p><h2 id="app-preview-title">Ολόκληρη η εφαρμογή.<br><span>Σε μικρό πλαίσιο.</span></h2></div><p>Διάλεξε διανομή, kernel, desktop και εφαρμογές και δείτε πώς ενημερώνεται η προεπισκόπηση του Linux Studio.</p></div>
-        <div class="studio-simulator reveal" aria-label="Διαδραστική προεπισκόπηση Linux Studio">
-          <aside class="sim-sidebar">
-            <div class="sim-brand"><img src="./linux-studio-logo.svg" alt=""><strong>Linux Studio</strong></div>
-            <nav aria-label="Προεπισκόπηση μενού">
-              <button type="button" class="sim-nav active" data-sim-view="iso"><span>◉</span> Εργαστήριο ISO</button>
-              <button type="button" class="sim-nav" data-sim-view="apps"><span>⊞</span> Εφαρμογές Linux</button>
-              <button type="button" class="sim-nav" data-sim-view="profiles"><span>◇</span> Τα προφίλ μου</button>
-            </nav>
-            <span class="sim-version">Linux Studio v0.8.0</span>
-          </aside>
-          <div class="sim-workspace">
-            <header class="sim-toolbar"><div><span class="sim-status-dot"></span><strong id="sim-page-title">Δημιουργία Linux ISO</strong></div><span class="sim-platform">x86-64 / Live</span></header>
-            <div class="sim-content" id="sim-iso-view">
-              <div class="sim-distros" role="group" aria-label="Επίλεξε διανομή">
-                <button type="button" class="sim-distro active" data-sim-distro="debian"><b>D</b><span>Debian<small>13 Trixie</small></span></button>
-                <button type="button" class="sim-distro" data-sim-distro="ubuntu"><b>U</b><span>Ubuntu<small>24.04 LTS</small></span></button>
-                <button type="button" class="sim-distro" data-sim-distro="arch"><b>A</b><span>Arch<small>Rolling</small></span></button>
-                <button type="button" class="sim-distro" data-sim-distro="fedora"><b>F</b><span>Fedora<small>44</small></span></button>
-              </div>
-              <div class="sim-wizard">
-                <div class="sim-stepper" aria-label="Βήματα δημιουργίας"><button class="active" data-sim-step="0">1 Διανομή</button><button data-sim-step="1">2 Περιβάλλον</button><button data-sim-step="2">3 Γλώσσα</button><button data-sim-step="3">4 Εφαρμογές</button><button data-sim-step="4">5 Εγκατάσταση</button><button data-sim-step="5">6 Σύνοψη</button></div>
-                <div class="sim-form">
-                  <div class="sim-form-main">
-                    <span class="sim-eyebrow" id="sim-step-kicker">ΒΑΣΗ ΤΟΥ ISO</span>
-                    <h3 id="sim-step-title">Διάλεξε διανομή και kernel</h3>
-                    <label>Διανομή<select id="sim-distro-select"><option value="debian">Debian 13</option><option value="ubuntu">Ubuntu 24.04 LTS</option><option value="arch">Arch Linux</option><option value="fedora">Fedora 44</option></select></label>
-                    <label>Kernel<select id="sim-kernel-select"></select></label>
-                    <label>Desktop<select id="sim-desktop-select"></select></label>
-                  </div>
-                  <aside class="sim-summary"><span>LIVE RECIPE</span><pre id="sim-recipe"></pre><button type="button" id="sim-next" class="sim-next">Συνέχεια →</button></aside>
-                </div>
-              </div>
-            </div>
-            <div class="sim-content sim-library-view" id="sim-apps-view" hidden>
-              <header><span class="sim-eyebrow">LINUX STUDIO / APPS</span><h3>Ο κόσμος σου. Οι εφαρμογές σου.</h3></header>
-              <div class="sim-app-chips"><button class="active">Όλες</button><button>Γραφείο</button><button>Gaming</button><button>Προγραμματισμός</button><button>Δημιουργία</button></div>
-              <div class="sim-app-grid"><article><b>◎</b><span>LibreOffice<small>Γραφείο</small></span></article><article><b>⌁</b><span>Firefox<small>Internet</small></span></article><article><b>▶</b><span>VLC<small>Πολυμέσα</small></span></article><article><b>◆</b><span>Blender<small>3D</small></span></article><article><b>⌨</b><span>VS Code<small>Κώδικας</small></span></article><article><b>⚙</b><span>Steam<small>Gaming</small></span></article></div>
-            </div>
-            <div class="sim-content sim-library-view" id="sim-profiles-view" hidden><header><span class="sim-eyebrow">ΔΗΜΙΟΥΡΓΗΣΕ / ΚΡΑΤΗΣΕ / ΜΟΙΡΑΣΟΥ</span><h3>Τα προφίλ μου</h3></header><div class="sim-profile-grid"><article><span>08</span><h4>Gaming Debian</h4><p>Xfce · GNOME · Nord</p></article><article><span>12</span><h4>Creator Arch</h4><p>Zen kernel · Xfce</p></article><button type="button">+ Νέο προφίλ</button></div></div>
-          </div>
+      <div class="terminal" aria-label="Ενδεικτικό recipe για Linux Studio">
+        <div class="terminal-bar"><span class="dots" aria-hidden="true">● ● ●</span><span>studio / live.recipe</span><span>YAML</span></div>
+        <div class="terminal-body">
+          <div class="prompt"><b>studio@linux</b>:~$ cat live.recipe</div>
+          <pre><code><i>1</i> distro: <strong id="hero-distro">debian-13</strong>
+<i>2</i> kernel: <strong id="hero-kernel">standard</strong>
+<i>3</i> desktop: <strong id="hero-desktop">xfce</strong>
+<i>4</i> architecture: <strong>x86_64</strong>
+<i>5</i> output: <strong>live.iso</strong></code></pre>
+          <div class="prompt"><b>studio@linux</b>:~$ <span class="cursor"></span></div>
         </div>
-        <div class="app-preview-links reveal"><a class="inline-link" href="./distributions.html">Διανομές και λήψεις <span>→</span></a><a class="inline-link" href="./download.html">Κατέβασε την εφαρμογή <span>↓</span></a></div>
+      </div>
+      <a class="scroll" href="#lab"><span aria-hidden="true">↓</span> Εξερεύνησε το εργαστήριο</a>
+    </section>
+    <section class="section wrap" id="app">
+      <div class="section-title reveal"><p class="eyebrow">/ Η ΕΦΑΡΜΟΓΗ</p><h2>Άνοιξε το Linux Studio.</h2><p>Δοκίμασε τις διανομές, τα έξι βήματα του Εργαστηρίου ISO και τη Βιβλιοθήκη εφαρμογών. Για δημιουργία ISO ή εγκατάσταση πακέτων, <a class="preview-link" href="#download">κατέβασε την εφαρμογή</a>.</p></div>
+      <div class="app-preview live-preview reveal">
+        <div class="terminal-bar"><span class="dots" aria-hidden="true">● ● ●</span><span>Linux Studio / Εργαστήριο ISO</span><span>DEMO</span></div>
+        <p class="preview-status" id="preview-status" role="status">Έλεγχος για την τελευταία έκδοση του Linux Studio…</p>
+        <iframe id="desktop-preview" class="desktop-preview" title="Διαδραστική προεπισκόπηση Linux Studio" sandbox="allow-scripts allow-popups allow-popups-to-escape-sandbox" hidden></iframe>
+        <noscript><p class="preview-status">Ενεργοποίησε τη JavaScript για να δοκιμάσεις την εφαρμογή εδώ.</p></noscript>
       </div>
     </section>
-    <section class="section explore-section" id="explore" aria-labelledby="explore-title">
-      <div class="container">
-        <div class="section-heading reveal"><p class="eyebrow">ΔΙΑΛΕΞΕ ΤΗΝ ΑΦΕΤΗΡΙΑ ΣΟΥ</p><h2 id="explore-title">Τέσσερις διανομές.<br><span>Ο δικός σου συνδυασμός.</span></h2><p class="section-description">Η διανομή δίνει τη βάση και τα αποθετήρια πακέτων. Ο kernel είναι ο πυρήνας του συστήματος. Το desktop είναι το γραφικό περιβάλλον που χρησιμοποιείς.</p></div>
-        <div class="explorer reveal">
-          <div class="distro-picker" role="group" aria-label="Επίλεξε διανομή για να δεις τις επιλογές">
-            <button type="button" data-distro="debian" aria-pressed="true" aria-controls="distro-detail"><span class="distro-monogram debian" aria-hidden="true">D</span><span>Debian<small>13 · Trixie</small></span><b aria-hidden="true">↗</b></button>
-            <button type="button" data-distro="ubuntu" aria-pressed="false" aria-controls="distro-detail"><span class="distro-monogram ubuntu" aria-hidden="true">U</span><span>Ubuntu<small>24.04 LTS</small></span><b aria-hidden="true">↗</b></button>
-            <button type="button" data-distro="arch" aria-pressed="false" aria-controls="distro-detail"><span class="distro-monogram arch" aria-hidden="true">A</span><span>Arch Linux<small>Rolling release</small></span><b aria-hidden="true">↗</b></button>
-            <button type="button" data-distro="fedora" aria-pressed="false" aria-controls="distro-detail"><span class="distro-monogram fedora" aria-hidden="true">F</span><span>Fedora<small>44</small></span><b aria-hidden="true">↗</b></button>
-          </div>
-          <div class="distro-detail" id="distro-detail" aria-live="polite" aria-atomic="true">
-            <div class="detail-top"><span class="mono">Η ΔΙΑΜΟΡΦΩΣΗ ΣΟΥ</span><span class="detail-dot" aria-hidden="true"></span></div>
-            <h3 id="distro-title">Debian 13</h3><p id="distro-description">Μια σταθερή βάση με επιλογή εγκαταστάτη για το τελικό ISO.</p>
-            <dl><div><dt>Kernel</dt><dd id="distro-kernel">Standard · Real-time</dd></div><div><dt>Desktop</dt><dd id="distro-desktop">Xfce · GNOME · KDE Plasma · Τερματικό</dd></div><div><dt>Δημιουργία με</dt><dd id="distro-tool">live-build</dd></div></dl>
-            <div class="environment-note"><span aria-hidden="true">↳</span><p id="distro-environment">Σε Debian 13 x86-64 ή σε ξεχωριστό περιβάλλον WSL 2 από τα Windows.</p></div>
-            <a class="inline-link" href="./download.html">Ξεκίνα με το Linux Studio <span aria-hidden="true">↗</span></a>
-          </div>
-        </div>
-        <p class="explorer-note reveal">Οι επιλογές εδώ δείχνουν τι υποστηρίζει η εφαρμογή. Η διαμόρφωση και η δημιουργία του ISO γίνονται στο εγκατεστημένο Linux Studio.</p>
+    <section class="section wrap" id="distros">
+      <div class="section-title reveal"><p class="eyebrow">/ ΣΥΜΒΑΤΟΤΗΤΑ</p><h2>Οι διαθέσιμες διανομές.</h2><p>Διάλεξε μια διανομή για να τη φορτώσεις στο demo του εργαστηρίου.</p></div>
+      <div class="table-scroll reveal" role="region" aria-label="Πίνακας συμβατότητας διανομών" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">Διανομή</th><th scope="col">Kernel</th><th scope="col">Desktop</th><th scope="col">Εργαλείο build</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><a href="#lab" data-demo-distro="debian-13">Debian 13 ↗</a></th><td>Standard, Real-time</td><td>Xfce, GNOME, KDE Plasma, τερματικό</td><td><code>live-build</code></td></tr>
+            <tr><th scope="row"><a href="#lab" data-demo-distro="ubuntu-24.04">Ubuntu 24.04 LTS ↗</a></th><td>Generic, HWE, Low-latency</td><td>Xfce, GNOME, KDE Plasma, τερματικό</td><td>Casper, debootstrap, GRUB</td></tr>
+            <tr><th scope="row"><a href="#lab" data-demo-distro="arch">Arch Linux ↗</a></th><td>Standard, LTS, Zen, Hardened</td><td>Xfce, τερματικό</td><td><code>archiso</code></td></tr>
+            <tr><th scope="row"><a href="#lab" data-demo-distro="fedora-44">Fedora 44 ↗</a></th><td>Standard, Debug</td><td>Xfce, GNOME, KDE Plasma, τερματικό</td><td>Lorax</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="build-note reveal"><strong>Πού γίνεται το build;</strong><p>Χρειάζεσαι x86-64, σύνδεση στο διαδίκτυο και τουλάχιστον 30 GB ελεύθερου χώρου. Στο Linux, χρησιμοποίησε την αντίστοιχη διανομή. Στα Windows, Debian, Ubuntu και Arch χτίζονται μέσω WSL 2. Το Fedora χτίζεται σε αποκλειστική εικονική μηχανή Fedora.</p></div>
+    </section>
+    <section class="section wrap" id="lab">
+      <div class="section-title reveal"><p class="eyebrow">/ ISO BUILDER</p><h2>Στήσε το δικό σου build.</h2><p>Άλλαξε τις επιλογές και δες πώς ενημερώνεται η σύνοψη του ISO.</p></div>
+      <div class="lab reveal">
+        <form class="controls" aria-label="Επιλογές demo ISO">
+          <label for="distro">Διανομή</label><select id="distro"><option value="debian-13">Debian 13</option><option value="ubuntu-24.04">Ubuntu 24.04 LTS</option><option value="arch">Arch Linux</option><option value="fedora-44">Fedora 44</option></select>
+          <label for="kernel">Kernel</label><select id="kernel"><option value="standard">Standard</option><option value="real-time">Real-time</option></select>
+          <label for="desktop">Desktop</label><select id="desktop"><option value="xfce">Xfce</option><option value="gnome">GNOME</option><option value="plasma">KDE Plasma</option><option value="terminal">Τερματικό</option></select>
+        </form>
+        <div class="recipe"><div class="recipe-head"><span>live.recipe</span><button id="copy" type="button">Αντιγραφή</button></div><pre id="recipe" tabindex="0">distro: debian-13
+kernel: standard
+desktop: xfce
+architecture: x86_64
+output: live.iso</pre><p id="copy-status" role="status"></p></div>
+      </div>
+      <div class="features reveal">
+        <article><span aria-hidden="true">[&gt;_]</span><h3>Εργαλεία ανάπτυξης</h3><p>Πρόσθεσε Python, Node.js, Java ή εργαλεία C/C++ στο ISO σου.</p></article>
+        <article><span aria-hidden="true">[▦]</span><h3>Δικό σου desktop</h3><p>Διάλεξε γραφικό περιβάλλον και προεγκατεστημένη εμφάνιση.</p></article>
+        <article><span aria-hidden="true">[◎]</span><h3>Τοπικό build</h3><p>Δημιούργησε το Live ISO στην εφαρμογή Linux Studio με τα εργαλεία της διανομής σου.</p></article>
       </div>
     </section>
-
-    <section class="section container product-section" aria-labelledby="product-title">
-      <div class="product-heading reveal"><div><p class="eyebrow">ΟΛΕΣ ΟΙ ΕΠΙΛΟΓΕΣ, ΜΠΡΟΣΤΑ ΣΟΥ</p><h2 id="product-title">Από την ιδέα<br><span>στο δικό σου ISO.</span></h2></div><p>Ένας οδηγός έξι βημάτων, με σύνοψη που ενημερώνεται όσο επιλέγεις. Βλέπεις τι θα περιέχει η εικόνα πριν ξεκινήσει η δημιουργία.</p></div>
-      <figure class="app-showcase reveal"><div class="window-bar"><span aria-hidden="true">● ● ●</span><span>Linux Studio — Εργαστήριο ISO</span><span class="mono">x86-64</span></div><img src="./studio-preview.png" alt="Η εφαρμογή Linux Studio με οδηγό έξι βημάτων, επιλογές Debian, Ubuntu, Arch και Fedora και ζωντανή σύνοψη ISO." width="1440" height="980" loading="lazy" decoding="async"></figure>
-      <div class="feature-notes">
-        <article class="reveal"><span class="feature-glyph" aria-hidden="true">◫</span><h3>Το desktop που προτιμάς</h3><p>Xfce, GNOME, KDE Plasma ή τερματικό, ανάλογα με τη διανομή. Διάλεξε πώς θα μοιάζει το Live σύστημά σου.</p></article>
-        <article class="reveal"><span class="feature-glyph" aria-hidden="true">⊞</span><h3>Οι εφαρμογές που χρειάζεσαι</h3><p>Πρόσθεσε επιλογές όπως Firefox, LibreOffice, VLC και εργαλεία ανάπτυξης, όπου υποστηρίζονται.</p></article>
-        <article class="reveal"><span class="feature-glyph" aria-hidden="true">↓</span><h3>Ένα αρχείο, έτοιμο για δοκιμή</h3><p>Παρακολούθησε την καταγραφή δημιουργίας και κατέβασε το ISO μόλις ολοκληρωθεί.</p></article>
+    <section class="section wrap" id="faq">
+      <div class="section-title reveal"><p class="eyebrow">/ ΣΥΧΝΕΣ ΕΡΩΤΗΣΕΙΣ</p><h2>Πριν ξεκινήσεις.</h2></div>
+      <div class="faq reveal">
+        <details><summary>Τι μπορώ να κάνω με το τελικό ISO;</summary><p>Μπορείς να το ανοίξεις σε εικονική μηχανή ή να το γράψεις σε USB για εκκίνηση. Το προφίλ Debian προσφέρει και επιλογή συμπερίληψης του Debian Installer.</p></details>
+        <details><summary>Μπορώ να εγκαταστήσω εφαρμογές στο Linux που ήδη έχω;</summary><p>Στο Linux, η ξεχωριστή βιβλιοθήκη εφαρμογών χρησιμοποιεί Flatpak και Flathub. Μπορείς να αναζητήσεις εφαρμογές ανά κατηγορία και να εγκαταστήσεις πολλές μαζί.</p></details>
+        <details><summary>Το online demo δημιουργεί αρχείο ISO;</summary><p>Εδώ μπορείς να δοκιμάσεις τους συνδυασμούς και να αντιγράψεις τη σύνοψη. Για να δημιουργήσεις το αρχείο, κατέβασε και άνοιξε το Linux Studio στον υπολογιστή σου.</p></details>
       </div>
     </section>
-
-    <section class="workflow-section" id="how-it-works" aria-labelledby="workflow-title">
-      <div class="container workflow-layout">
-        <div class="workflow-heading reveal"><p class="eyebrow">ΠΩΣ ΛΕΙΤΟΥΡΓΕΙ</p><h2 id="workflow-title">Εσύ επιλέγεις.<br><span>Το Linux Studio<br>το συνθέτει.</span></h2><a class="inline-link" href="./guide.html">Διάβασε τον οδηγό <span aria-hidden="true">↗</span></a></div>
-        <ol class="workflow-list">
-          <li class="reveal"><span class="step-mark" aria-hidden="true">↓</span><div><h3>Κατέβασε την εφαρμογή</h3><p>Εγκατέστησε το Linux Studio σε Windows ή Linux. Στα Windows, η εφαρμογή χρησιμοποιεί WSL 2 για Debian, Ubuntu και Arch και σε καθοδηγεί στην προετοιμασία του.</p></div></li>
-          <li class="reveal"><span class="step-mark" aria-hidden="true">☷</span><div><h3>Διαμόρφωσε το σύστημά σου</h3><p>Επίλεξε διανομή και kernel, πρόσθεσε desktop, γλώσσα, πληκτρολόγιο και εφαρμογές. Στο Debian μπορείς να συμπεριλάβεις τον Debian Installer.</p></div></li>
-          <li class="reveal"><span class="step-mark" aria-hidden="true">›_</span><div><h3>Ξεκίνα τη δημιουργία</h3><p>Πάτησε «Δημιουργία ISO». Τα εργαλεία της διανομής λαμβάνουν τα πακέτα και χτίζουν την εικόνα. Η πρόοδος εμφανίζεται στην καταγραφή της εφαρμογής.</p></div></li>
-          <li class="reveal"><span class="step-mark" aria-hidden="true">↗</span><div><h3>Κατέβασε και δοκίμασε το ISO</h3><p>Όταν ολοκληρωθεί, πάτησε «Λήψη ISO». Δοκίμασέ το σε εικονική μηχανή πριν το χρησιμοποιήσεις σε πραγματικό υπολογιστή.</p></div></li>
-        </ol>
-      </div>
-      <div class="container requirements reveal"><span class="mono">ΠΡΙΝ ΞΕΚΙΝΗΣΕΙΣ</span><p>Χρειάζεσαι σύνδεση στο διαδίκτυο και τουλάχιστον 30 GB ελεύθερου χώρου. Στο Linux η δημιουργία γίνεται στην αντίστοιχη διανομή. Στα Windows χρησιμοποιείται ξεχωριστή έκδοση με QEMU και USB εργασίες. Το Fedora απαιτεί αποκλειστική VM.</p></div>
+    <section id="download" class="wrap section download reveal">
+      <p class="eyebrow">/ DOWNLOAD</p><h2>Έτοιμος για το πρώτο ISO;</h2><p>Άνοιξε το Linux Studio στον υπολογιστή σου και ξεκίνα το build.</p>
+      <div class="actions"><a class="primary" href="distributions.html">Λήψη για Linux ανά διανομή ↗</a><a class="secondary" href="https://github.com/Anserb/iso-studio/releases/latest">Έκδοση για Windows ↗</a><a class="secondary" href="https://linuxstudio.pvgaming.uk/guide.html">Οδηγός εγκατάστασης ↗</a></div>
     </section>
-
-    <section class="section container faq-section" aria-labelledby="faq-title">
-      <div class="section-heading reveal"><p class="eyebrow">ΚΑΛΟ ΕΙΝΑΙ ΝΑ ΞΕΡΕΙΣ</p><h2 id="faq-title">Πριν το πρώτο σου <span>build.</span></h2></div>
-      <div class="faq-list reveal">
-        <details><summary>Τι ακριβώς δημιουργεί το Linux Studio;<span aria-hidden="true">+</span></summary><p>Μια εικόνα Linux Live σε αρχείο .iso, με τη διανομή, τον kernel, το γραφικό περιβάλλον και τα πακέτα που επέλεξες. Τη χρησιμοποιείς για εκκίνηση από USB ή σε εικονική μηχανή. Η επιλογή εγκαταστάτη στον δίσκο υποστηρίζεται στο προφίλ Debian.</p></details>
-        <details><summary>Μπορώ να το χρησιμοποιήσω στα Windows;<span aria-hidden="true">+</span></summary><p>Ναι. Το Linux Studio για Windows προετοιμάζει ξεχωριστό WSL 2 για Debian, Ubuntu και Arch. Η ενεργοποίηση του WSL 2 μπορεί να ζητήσει δικαιώματα διαχειριστή και επανεκκίνηση. Το Fedora χτίζεται σε αποκλειστική VM Fedora.</p></details>
-        <details><summary>Ποια είναι η διαφορά διανομής, kernel και desktop;<span aria-hidden="true">+</span></summary><p>Η διανομή, όπως το Debian, παρέχει τη βάση και τα αποθετήρια πακέτων. Ο kernel επικοινωνεί με το υλικό και διαχειρίζεται τους πόρους. Το desktop, όπως το KDE Plasma ή το Xfce, είναι το γραφικό περιβάλλον με τα παράθυρα και τα μενού.</p></details>
-        <details><summary>Είναι δωρεάν; Χρειάζομαι λογαριασμό;<span aria-hidden="true">+</span></summary><p>Ο πηγαίος κώδικας διατίθεται με άδεια MIT. Μπορείς να κατεβάσεις την εφαρμογή και να διαβάσεις τον οδηγό χωρίς λογαριασμό. Το site διαθέτει και σελίδα διαχείρισης λογαριασμού.</p></details>
-      </div>
-    </section>
-
-    <section class="support-section" id="support" aria-labelledby="support-title">
-      <div class="container support-layout">
-        <div><p class="eyebrow">ΥΠΟΣΤΗΡΙΞΗ</p><h2 id="support-title">Χρειάζεσαι βοήθεια;<br><span>Στείλε μας μήνυμα.</span></h2><p>Για εγκατάσταση, διανομές, δημιουργία ISO ή προβλήματα με μια έκδοση, συμπλήρωσε τη φόρμα.</p></div>
-        <form id="support-form" class="support-form"><label>Όνομα<input name="name" autocomplete="name" required></label><label>Email επικοινωνίας<input type="email" name="email" autocomplete="email" required></label><label>Θέμα<select name="topic"><option>Εγκατάσταση εφαρμογής</option><option>Επιλογές διανομής</option><option>Δημιουργία ISO</option><option>Λήψη και USB</option><option>Άλλο</option></select></label><label>Μήνυμα<textarea name="message" rows="5" required></textarea></label><button type="submit" class="button">Άνοιγμα email υποστήριξης <span>↗</span></button></form>
-      </div>
-    </section>
-    <section class="download-section" aria-labelledby="download-title">
-      <img src="./images/arctic-reflections.jpg" alt="" width="1800" height="1200" loading="lazy" decoding="async"><div class="download-shade"></div>
-      <div class="container download-content reveal"><p class="eyebrow">Η ΕΠΟΜΕΝΗ ΕΚΚΙΝΗΣΗ ΕΙΝΑΙ ΔΙΚΗ ΣΟΥ</p><h2 id="download-title">Φτιάξε το Linux<br>που θέλεις να <em>ανοίγεις.</em></h2><p>Ξεκίνα από μια διανομή. Δώσε της τη δική σου κατεύθυνση.</p><div class="hero-actions"><a class="button" href="./download.html">Κατέβασε το Linux Studio <span aria-hidden="true">↗</span></a><a class="text-button" href="https://github.com/Anserb/iso-studio">Δες τον πηγαίο κώδικα ↗</a></div></div>
+    <section class="section wrap" id="support">
+      <div class="section-title reveal"><p class="eyebrow">/ SUPPORT</p><h2>Χρειάζεσαι βοήθεια;</h2><p>Στείλε μας την ερώτησή σου ή περιέγραψε τι συνέβη. Για πρόβλημα στο build, συμπερίλαβε τη διανομή, την έκδοση της εφαρμογής και τις σχετικές γραμμές της καταγραφής.</p></div>
+      <form class="support-form reveal" id="support-form">
+        <div><label for="support-topic">Θέμα</label><select id="support-topic" name="topic"><option>Πρόβλημα δημιουργίας ISO</option><option>Εγκατάσταση ή ενημέρωση</option><option>Πρόταση δυνατότητας</option><option>Γενική ερώτηση</option></select></div>
+        <div><label for="support-system">Λειτουργικό ή διανομή (προαιρετικό)</label><input id="support-system" name="system" placeholder="π.χ. Windows 11 ή Debian 13" maxlength="120"></div>
+        <div class="support-wide"><label for="support-message">Μήνυμα</label><textarea id="support-message" name="message" rows="5" required maxlength="1200" placeholder="Ποιο βήμα δοκίμασες και τι εμφανίστηκε;"></textarea></div>
+        <div class="support-wide"><button class="primary" type="submit">Άνοιγμα email ↗</button><p class="support-hint">Η φόρμα ανοίγει προσυμπληρωμένο email για να το στείλεις. Μπορείς επίσης να γράψεις απευθείας στο <a id="support-email" href="mailto:billpirgopoulos1@gmail.com">billpirgopoulos1@gmail.com</a>.</p></div>
+      </form>
     </section>
   </main>
-  <footer class="site-footer"><div class="container footer-main"><a class="logo" href="./"><img class="logo-icon" src="./linux-studio-logo.svg" alt="">Linux<span class="logo-light">Studio</span></a><p>Το Linux στα μέτρα σου.</p><div><a href="./features.html">Δυνατότητες</a><a href="./guide.html">Οδηγός</a><a href="./account.html">Λογαριασμός</a><a href="https://wincraft.pvgaming.uk/">WinCraft για Windows ↗</a></div></div><div class="container footer-bottom"><span>© 2026 Linux Studio · <a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a></span><span>Φωτογραφίες <a href="https://unsplash.com/photos/-3h8OXvt4-0">Jonatan Pie</a> &amp; <a href="https://unsplash.com/photos/alYjSlho1RM">Francesco Ungaro</a> / Unsplash</span></div></footer>
+  <footer class="wrap"><span>Linux Studio</span><div><a href="https://linuxstudio.pvgaming.uk">Επίσημο site ↗</a><a href="https://github.com/Anserb/iso-studio">Πηγαίος κώδικας ↗</a></div></footer>
 </body>
 </html>
