@@ -42,6 +42,7 @@ function start(directory) {
     clearTimeout(timeout);
     const first = !activePort;
     activePort = message.port;
+    if (process.send && process.connected) process.send({ port: activePort });
     if (!first) { console.log('Linux Studio · ενημερώθηκε και ξεκίνησε ξανά.'); return; }
     const url = `http://127.0.0.1:${activePort}`;
     console.log('Άφησε αυτό το τερματικό ανοιχτό. Πάτησε Ctrl+C για έξοδο.');

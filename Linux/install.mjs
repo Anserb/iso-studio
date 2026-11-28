@@ -1,4 +1,5 @@
-import { copyFile, lstat, mkdir, mkdtemp, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { chmod, copyFile, lstat, mkdir, mkdtemp, readFile, rename, rm, symlink, writeFile } from 'node:fs/promises';
+import { createHash, randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
 
@@ -37,6 +38,24 @@ let nextLink;
 let published = false;
 try {
   await mkdir(location, { recursive: true, mode: 0o700 });
+  let runtime = process.execPath;
+  if (process.env.LINUX_STUDIO_BUNDLED_RUNTIME === '1') {
+    const folder = join(location, 'runtime');
+    await mkdir(folder, { recursive: true, mode: 0o700 });
+    runtime = join(folder, `node-v${process.versions.node}`);
+    const source = await readFile(process.execPath);
+    const hash = bytes => createHash('sha256').update(bytes).digest('hex');
+    const existing = await readFile(runtime).catch(error => { if (error.code !== 'ENOENT') throw error; });
+    if (!existing || hash(existing) !== hash(source)) {
+      const temporary = join(folder, `node-${randomUUID()}.tmp`);
+      await writeFile(temporary, source, { mode: 0o755, flag: 'wx' });
+      await rename(temporary, runtime);
+    }
+    await chmod(runtime, 0o755);
+    const license = await readFile(join(dirname(dirname(process.execPath)), 'LICENSE')).catch(() => null)
+      || await readFile(join(dirname(process.execPath), 'NODE-LICENSE')).catch(() => null);
+    if (license) await writeFile(join(folder, 'NODE-LICENSE'), license, { mode: 0o644 });
+  }
   staged = await mkdtemp(join(location, 'release-'));
   for (const file of files) {
     const destination = join(staged, file);
@@ -63,7 +82,7 @@ try {
   await mkdir(dirname(launcher), { recursive: true });
   await mkdir(dirname(desktop), { recursive: true });
   const launcherTemp = launcher + '.' + process.pid + '.tmp';
-  await writeFile(launcherTemp, `#!/bin/sh\nexec ${shellQuote(process.execPath)} ${shellQuote(launchScript)} "$@"\n`, { mode: 0o755, flag: 'wx' });
+  await writeFile(launcherTemp, `#!/bin/sh\n${process.env.LINUX_STUDIO_BUNDLED_RUNTIME === '1' ? 'export LINUX_STUDIO_BUNDLED_RUNTIME=1\n' : ''}exec ${shellQuote(runtime)} ${shellQuote(launchScript)} "$@"\n`, { mode: 0o755, flag: 'wx' });
   await rename(launcherTemp, launcher);
   await writeFile(desktop, `[Desktop Entry]
 Type=Application
@@ -71,7 +90,7 @@ Name=Linux Studio
 Comment=Configure and build a Linux Live ISO
 Exec=${desktopQuote(launcher)}
 Icon=${join(target, 'assets', 'linux-studio-logo.svg')}
-Terminal=true
+Terminal=false
 Categories=Utility;
 `);
   console.log(`Εγκαταστάθηκε. Άνοιξε το Linux Studio από το μενού ή εκτέλεσε:\n${shellQuote(launcher)}`);

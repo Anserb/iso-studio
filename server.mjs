@@ -27,7 +27,7 @@ const configHome = process.platform === 'win32' ? process.env.LOCALAPPDATA : pro
 const appearance = join(isAbsolute(configHome ?? '') ? configHome : join(homedir(), '.config'), 'linux-studio', 'appearance');
 const dataHome = process.env.XDG_DATA_HOME;
 const linuxApp = join(isAbsolute(dataHome ?? '') ? dataHome : join(homedir(), '.local', 'share'), 'linux-studio', 'app');
-const installed = process.platform === 'linux' ? process.getuid() !== 0 && resolve(root) === await realpath(linuxApp).catch(() => null)
+const installed = process.platform === 'linux' ? process.getuid() !== 0 && (resolve(root) === await realpath(linuxApp).catch(() => null) || process.env.LINUX_STUDIO_SYSTEM_SETUP === '1')
   : process.platform === 'win32' && process.env.LINUX_STUDIO_WINDOWS_SETUP === '1';
 const updater = createUpdater({ directory: join(dirname(appearance), 'updates'), installed });
 const store = createStudioStore(join(dirname(appearance), 'studio'));

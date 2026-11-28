@@ -22,7 +22,11 @@ node server.mjs
 
 Έχει δοκιμαστεί πραγματική παραγωγή και λήψη ISO Debian σε Linux. Η παραγωγή και εκκίνηση ISO στην κάθε διανομή και στο WSL 2 χρειάζονται ξεχωριστό έλεγχο.
 
-## Windows installer
+## Linux installers
+
+Το `installer/build-linux-installers.sh` δημιουργεί `LinuxStudioSetup.deb`, `LinuxStudioSetup.rpm` και `LinuxStudioSetup.run` στον φάκελο `release`. Εκτελείται σε Linux με `dpkg-deb`, `rpmbuild`, Python 3, xz και tar, με πρώτο όρισμα το επίσημο `node-v26.13.1-linux-x64.tar.xz`. Το SHA-256 του runtime επαληθεύεται πριν την παραγωγή. Το `.run` περιλαμβάνει το `Linux/setup.mjs`, το οποίο εμφανίζει γραφικό εγκαταστάτη στον browser. Όλες οι εκδόσεις περιλαμβάνουν runtime και εγγραφή στο μενού εφαρμογών, χωρίς τερματικό για τον τελικό χρήστη.
+
+## Windows setup
 
 Το `installer/build-installer.ps1` δημοσιεύει την εφαρμογή μαζί με τα runtimes .NET και Node.js και δημιουργεί το `release/LinuxStudioSetup.exe` μέσω Inno Setup 6. Το παράθυρο των Windows ξεκινά τον τοπικό server σε ελεύθερη θύρα και τον τερματίζει όταν κλείνει. Η παραγωγή του ISO εκτελείται σε συμβατό Linux.
 

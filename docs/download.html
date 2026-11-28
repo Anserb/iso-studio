@@ -3,57 +3,61 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="Κατέβασε το Linux Studio για Windows ή τρέξε τον πηγαίο κώδικα σε Linux.">
-  <title>Λήψη — Linux Studio</title>
+  <meta name="theme-color" content="#071512">
+  <meta name="description" content="Κατέβασε το Linux Studio για Windows ή Linux.">
+  <title>Λήψεις — Linux Studio</title>
   <link rel="canonical" href="https://linuxstudio.pvgaming.uk/download">
-  <script src="./appearance.js"></script>
-  <link rel="stylesheet" href="./site.css">
-
-  <link rel="icon" type="image/svg+xml" href="./linux-studio-logo.svg">
+  <link rel="icon" type="image/svg+xml" href="/linux-studio-logo.svg">
+  <link rel="stylesheet" href="/style.css?v=pages">
+  <script src="/studio.js?v=pages" defer></script>
+  <script src="/releases.js" defer></script>
 </head>
 <body>
-  <header class="masthead">
-    <div class="frame bar">
-      <a class="wordmark" href="./"><img class="mark" src="./linux-studio-logo.svg" alt="">Linux Studio</a>
-      <nav aria-label="Κύρια πλοήγηση">
-        <a href="./">Αρχική</a>
-        <a href="./features.html">Δυνατότητες</a>
-        <a href="./distributions.html">Διανομές</a>
-        <a href="./guide.html">Οδηγός</a>
-        <a href="./download.html" aria-current="page">Λήψη</a>
-        <a href="./faq.html">Ερωτήσεις</a>
-        <a href="./account.html">Λογαριασμός</a>
-      </nav>
-      <details class="appearance">
-        <summary>Εμφάνιση</summary>
-        <div class="appearance-panel">
-          <label>Θέμα<select id="site-theme"><option value="system">Σύστημα</option><option value="light">Ανοιχτό</option><option value="dark">Σκούρο</option></select></label>
-          <label>Χρώμα<select id="site-accent"><option value="green">Λάιμ</option><option value="copper">Χάλκινο</option><option value="blue">Μπλε</option></select></label>
-        </div>
-      </details>
-    </div>
+  <canvas id="terrain" aria-hidden="true"></canvas>
+  <header class="top wrap">
+    <a class="brand" href="/" aria-label="Linux Studio, αρχική"><span class="mark" aria-hidden="true">&gt;_</span> Linux<span>Studio</span></a>
+    <nav aria-label="Κύρια πλοήγηση">
+      <a href="/">Αρχική</a>
+      <a href="/app">Εφαρμογή</a>
+      <a href="/distributions">Διανομές</a>
+      <a href="/demo">Demo</a>
+      <a href="/download" aria-current="page">Λήψεις</a>
+      <a href="/support">Υποστήριξη</a>
+    </nav>
+    <button id="motion" class="motion" type="button" aria-pressed="false">Παύση κίνησης</button>
   </header>
-  <main>
-    <section class="frame page-intro"><h1>Κατέβασε το<br>Linux Studio.</h1><p>Διάλεξε πού θα κάνεις τη ρύθμιση της εικόνας σου.</p></section>
-    <section class="frame feature-grid end-panel" aria-label="Επιλογές λήψης">
-      <article class="feature-tile emphasis"><h2>Έκδοση Windows</h2><p>Εγκαταστάτης .exe για Windows 10 22H2 ή Windows 11 x64. Συμπεριλαμβάνει WSL 2 setup, δοκιμή ISO σε QEMU και εγγραφή USB με επιβεβαίωση διαχειριστή.</p><a class="button primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.exe">Λήψη Windows .exe <span aria-hidden="true">↓</span></a><a class="text-link" href="https://github.com/Anserb/iso-studio/releases/latest">Σημειώσεις έκδοσης ↗</a></article>
-      <article class="feature-tile">
-        <h2>Έκδοση Linux</h2>
-        <p>Κατέβασε το πακέτο και πρόσθεσε το Linux Studio στο μενού εφαρμογών. Χρειάζεσαι <a href="https://nodejs.org/en/download">Node.js 22 ή νεότερο</a>.</p>
-        <a class="button primary" href="./linux-studio-linux.tar.gz" download>Λήψη για Linux <span aria-hidden="true">↓</span></a>
-        <pre><code>tar -xzf linux-studio-linux.tar.gz
-cd LinuxStudio
-node Linux/install.mjs</code></pre>
-        <p>Μετά την εγκατάσταση, άνοιξε το <strong>Linux Studio</strong> από το μενού εφαρμογών.</p>
-        <a class="text-link" href="./guide.html">Δημιουργία ISO →</a><a class="text-link" href="https://github.com/Anserb/iso-studio">Πηγαίος κώδικας ↗</a>
+  <main class="site-main">
+    <section class="wrap distro-intro"><h1>Κατέβασε το Linux Studio.</h1><p class="lead">Διάλεξε την έκδοση για το λειτουργικό σου.</p><p id="latest-release" class="latest-release" hidden></p><a class="preview-link" href="#releases">Ιστορικό εκδόσεων ↓</a></section>
+    <section class="wrap download-grid distro-section" aria-label="Επιλογές λήψης">
+      <article class="distro-card"><h2>Έκδοση Windows</h2><p>Εγκαταστάτης .exe για Windows 10 22H2 ή Windows 11 x64. Συμπεριλαμβάνει WSL 2 setup, δοκιμή ISO σε QEMU και εγγραφή USB με επιβεβαίωση διαχειριστή.</p><a class="primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.exe">Λήψη Windows .exe <span aria-hidden="true">↓</span></a><a class="preview-link" href="https://github.com/Anserb/iso-studio/releases/latest">Σημειώσεις έκδοσης ↗</a></article>
+      <article class="distro-card">
+        <h2>Debian · Ubuntu · Mint</h2>
+        <p>Κανονικό πακέτο .deb με ενσωματωμένο Node.js. Άνοιξέ το με τον γραφικό διαχειριστή λογισμικού και πάτησε Εγκατάσταση.</p>
+        <a class="primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.deb">Λήψη Linux .deb <span aria-hidden="true">↓</span></a>
+        <p>Μετά θα βρεις το Linux Studio στο μενού εφαρμογών. Δεν απαιτούνται εντολές τερματικού.</p>
+      </article>
+      <article class="distro-card">
+        <h2>Fedora · openSUSE</h2>
+        <p>Κανονικό πακέτο .rpm με ενσωματωμένο Node.js. Άνοιξέ το με τον γραφικό διαχειριστή λογισμικού και πάτησε Εγκατάσταση.</p>
+        <a class="primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.rpm">Λήψη Linux .rpm <span aria-hidden="true">↓</span></a>
+        <p>Η εφαρμογή προστίθεται στο μενού και χρησιμοποιεί το προσωπικό σου προφίλ για ενημερώσεις.</p>
+      </article>
+      <article class="distro-card">
+        <h2>Arch · Manjaro · Άλλα Linux</h2>
+        <p>Το .run ανοίγει γραφικό εγκαταστάτη στον browser. Περιλαμβάνει την εφαρμογή και το Node.js και εγκαθίσταται στο προφίλ σου χωρίς sudo.</p>
+        <a class="primary" href="https://github.com/Anserb/iso-studio/releases/latest/download/LinuxStudioSetup.run">Λήψη γραφικού installer .run <span aria-hidden="true">↓</span></a>
+        <p>Αν το Linux μπλοκάρει την πρώτη εκτέλεση, ενεργοποίησε «Να επιτρέπεται η εκτέλεση» στις ιδιότητες του αρχείου και άνοιξέ το ξανά.</p>
       </article>
     </section>
+    <section class="wrap distro-section"><p class="lead">Linux x86-64 με glibc 2.28 ή νεότερη, προεπιλεγμένο browser και xdg-open. Όλα τα πακέτα περιλαμβάνουν runtime. Δεν χρειάζεται να εγκαταστήσεις χωριστά Node.js.</p></section>
+    <section class="wrap distro-section" id="releases" aria-labelledby="release-heading">
+      <h2 id="release-heading">Ιστορικό εκδόσεων</h2>
+      <p class="release-status" id="release-list-status" role="status"></p>
+      <ul class="release-list" id="release-list" aria-label="Πρόσφατες δημοσιευμένες εκδόσεις"></ul>
+      <a class="preview-link" href="https://github.com/Anserb/iso-studio/releases">Όλες οι εκδόσεις στο GitHub ↗</a>
+    </section>
+
   </main>
-  <footer>
-    <div class="frame bar">
-      <a class="wordmark" href="./"><img class="mark" src="./linux-studio-logo.svg" alt="">Linux Studio</a>
-      <div class="footer-links"><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a><a href="https://github.com/Anserb/iso-studio/blob/main/LICENSE">Άδεια MIT</a><a href="https://wincraft.pvgaming.uk/">WinCraft για Windows ↗</a></div>
-    </div>
-  </footer>
+  <footer class="wrap"><span>Linux Studio</span><div><a href="/account">Λογαριασμός</a><a href="/guide">Οδηγός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a></div></footer>
 </body>
 </html>
