@@ -33,6 +33,8 @@ internal sealed class StudioWindow : Form
         Visible = false,
     };
     private readonly WebView2 web = new() { Dock = DockStyle.Fill, Visible = false };
+    private readonly Icon brandIcon = LoadBrandIcon();
+    private readonly Image brandImage = LoadBrandImage();
     private Process? server;
     private Uri? home;
 
@@ -43,18 +45,47 @@ internal sealed class StudioWindow : Form
         Size = new Size(1180, 850);
         MinimumSize = new Size(420, 540);
         BackColor = Color.FromArgb(13, 17, 25);
-        Icon = SystemIcons.Application;
+        Icon = brandIcon;
 
-        var startup = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2 };
+        var startup = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
         startup.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
+        startup.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         startup.RowStyles.Add(new RowStyle(SizeType.Percent, 50));
-        status.Anchor = AnchorStyles.Bottom;
+        var logo = new PictureBox
+        {
+            Image = brandImage,
+            SizeMode = PictureBoxSizeMode.Zoom,
+            Size = new Size(96, 96),
+            Anchor = AnchorStyles.Bottom,
+            Margin = new Padding(0, 0, 0, 12),
+            AccessibleName = AppName,
+            TabStop = false,
+        };
+        status.Anchor = AnchorStyles.None;
+        status.Margin = new Padding(12, 0, 12, 14);
         browser.Anchor = AnchorStyles.Top;
-        startup.Controls.Add(status, 0, 0);
-        startup.Controls.Add(browser, 0, 1);
+        startup.Controls.Add(logo, 0, 0);
+        startup.Controls.Add(status, 0, 1);
+        startup.Controls.Add(browser, 0, 2);
         Controls.Add(startup);
         Controls.Add(web);
         browser.Click += (_, _) => OpenBrowser();
+    }
+
+    private static Icon LoadBrandIcon()
+    {
+        using var stream = typeof(StudioWindow).Assembly.GetManifestResourceStream("LinuxStudio.BrandIcon")
+            ?? throw new InvalidOperationException("Λείπει το εικονίδιο του Linux Studio.");
+        using var icon = new Icon(stream);
+        return (Icon)icon.Clone();
+    }
+
+    private static Image LoadBrandImage()
+    {
+        using var stream = typeof(StudioWindow).Assembly.GetManifestResourceStream("LinuxStudio.BrandLogo")
+            ?? throw new InvalidOperationException("Λείπει το λογότυπο του Linux Studio.");
+        using var image = Image.FromStream(stream);
+        return new Bitmap(image);
     }
 
     protected override async void OnShown(EventArgs args)
@@ -249,5 +280,10 @@ internal sealed class StudioWindow : Form
             }
         }
         base.Dispose(disposing);
+        if (disposing)
+        {
+            brandIcon.Dispose();
+            brandImage.Dispose();
+        }
     }
 }
