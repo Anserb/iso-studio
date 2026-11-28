@@ -121,3 +121,37 @@ html.paused{scroll-behavior:auto}
 @media(max-width:480px){.lab,.support-form{grid-template-columns:1fr}.recipe{border-left:0;border-top:1px solid var(--edge)}}
 @media(prefers-reduced-motion:reduce){html:not(.motion-enabled){scroll-behavior:auto}html:not(.motion-enabled) *{animation:none!important;transition:none!important}}
 .app-preview.live-preview{width:min(100%,860px);margin-inline:auto}.desktop-preview:not([hidden]){display:block;width:100%;height:clamp(440px,64svh,620px);border:0;background:#10191e}.preview-status{margin:0;padding:10px 16px;border-bottom:1px solid var(--edge);color:var(--dim);font-size:.84rem}
+
+body{display:flex;flex-direction:column;min-height:100svh}
+.site-main{flex:1}
+.top nav{gap:4px;align-items:center}
+.top nav a{padding:8px 10px;border:1px solid transparent;border-radius:7px;white-space:nowrap}
+.top nav a:hover{background:#13291e}
+.top nav a[aria-current="page"]{color:var(--neon);border-color:#54774e;background:#1b3323}
+.site-main .hero{min-height:min(650px,78svh)}
+.section-title h1{font-size:clamp(2.65rem,6vw,5.2rem);letter-spacing:-.065em;margin-bottom:18px}
+.explore{padding-block:45px 70px}
+.explore h2{font-size:clamp(1.85rem,4vw,3rem);margin-bottom:23px}
+.explore-grid,.download-grid{display:grid;gap:14px}
+.explore-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr))}
+.download-grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
+.explore-card{display:grid;grid-template-rows:auto auto 1fr;gap:10px;padding:18px;border:1px solid var(--edge);border-radius:12px;background:linear-gradient(145deg,#142d22,#091913 80%)}
+.explore-card:hover{transform:translateY(-4px);border-color:var(--neon)}
+.explore-card strong{font-size:1.05rem}
+.explore-card span:last-child{color:var(--dim);font-size:.9rem;line-height:1.5}
+.explore-icon{display:grid;place-items:center;width:34px;height:34px;border:1px solid #456949;border-radius:7px;color:var(--neon);background:#0e2419;font:1rem var(--mono)}
+.download-grid .primary,.download-grid .preview-link{align-self:flex-start}
+.download-grid pre{margin:0;padding:12px;background:#071410;border:1px solid var(--edge);border-radius:7px;font-size:.85rem}
+#support .section-title>p:last-child{max-width:62ch}
+#support .support-form{max-width:860px}
+#faq{padding-top:0}
+@media(max-width:850px){.top nav{gap:3px}.top nav a{padding:6px 8px}}
+@media(max-width:760px){.site-main .hero{min-height:auto}}
+.latest-release{color:var(--dim)}
+.latest-release a,.release-list a{color:var(--neon);text-decoration:underline;text-underline-offset:.2em}
+.release-list{display:grid;gap:8px;list-style:none;padding:0;margin:0 0 18px}
+.release-list:empty{display:none}
+.release-list li{display:flex;flex-wrap:wrap;align-items:center;gap:8px 16px;padding:13px 16px;border:1px solid var(--edge);border-radius:8px;background:#091913f2}
+.release-list time,.release-list span{font-size:.84rem;color:var(--dim)}
+
+img.mark{width:2.6rem;height:2.6rem;padding:0;object-fit:contain;flex:none;background:transparent;animation:none;vertical-align:middle}

@@ -1,4 +1,7 @@
 using System.Diagnostics;
+using System.Globalization;
+using System.Runtime.InteropServices;
+using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 
@@ -37,6 +40,77 @@ internal sealed class StudioWindow : Form
     private readonly Image brandImage = LoadBrandImage();
     private Process? server;
     private Uri? home;
+    private bool darkCaption = true;
+    private Color captionBackground = Color.FromArgb(11, 18, 32);
+    private Color captionForeground = Color.FromArgb(239, 246, 255);
+
+    [DllImport("dwmapi.dll", ExactSpelling = true)]
+    private static extern int DwmSetWindowAttribute(IntPtr window, int attribute, ref int value, int size);
+
+    private void ApplyWindowTheme()
+    {
+        if (!IsHandleCreated) return;
+        var dark = darkCaption ? 1 : 0;
+        var background = ColorTranslator.ToWin32(captionBackground);
+        var foreground = ColorTranslator.ToWin32(captionForeground);
+        // Custom caption colors are available on Windows 11; older Windows keeps the dark/light frame.
+        _ = DwmSetWindowAttribute(Handle, 20, ref dark, sizeof(int));
+        _ = DwmSetWindowAttribute(Handle, 35, ref background, sizeof(int));
+        _ = DwmSetWindowAttribute(Handle, 36, ref foreground, sizeof(int));
+    }
+
+    protected override void OnHandleCreated(EventArgs args)
+    {
+        base.OnHandleCreated(args);
+        ApplyWindowTheme();
+    }
+
+    protected override void WndProc(ref Message message)
+    {
+        base.WndProc(ref message);
+        if (message.Msg is 0x031A or 0x031E or 0x001A) ApplyWindowTheme();
+    }
+
+    private static bool TryReadColor(JsonElement root, string property, out Color color)
+    {
+        color = default;
+        if (!root.TryGetProperty(property, out var element) || element.ValueKind != JsonValueKind.String) return false;
+        var text = element.GetString();
+        if (text is not { Length: 7 } || text[0] != '#'
+            || !int.TryParse(text.AsSpan(1), NumberStyles.AllowHexSpecifier, CultureInfo.InvariantCulture, out var rgb)) return false;
+        color = Color.FromArgb((rgb >> 16) & 255, (rgb >> 8) & 255, rgb & 255);
+        return true;
+    }
+
+    private void ReceiveAppearance(object? sender, CoreWebView2WebMessageReceivedEventArgs args)
+    {
+        if (home is null || !Uri.TryCreate(args.Source, UriKind.Absolute, out var source)
+            || source.Scheme != home.Scheme || source.Host != home.Host || source.Port != home.Port || source.AbsolutePath != "/") return;
+        if (args.WebMessageAsJson.Length > 1024) return;
+        try
+        {
+            using var document = JsonDocument.Parse(args.WebMessageAsJson);
+            var root = document.RootElement;
+            if (root.ValueKind != JsonValueKind.Object || !root.TryGetProperty("type", out var type) || type.GetString() != "appearance"
+                || !root.TryGetProperty("theme", out var theme) || theme.ValueKind != JsonValueKind.String
+                || theme.GetString() is not ("dark" or "light")
+                || !TryReadColor(root, "background", out var background) || !TryReadColor(root, "foreground", out var foreground)) return;
+            SetAppearance(theme.GetString() == "dark", background, foreground);
+        }
+        catch (JsonException) { /* Ignore messages that are not valid theme settings. */ }
+        catch (InvalidOperationException) { /* Ignore JSON values with an unexpected type. */ }
+    }
+
+    private void SetAppearance(bool dark, Color background, Color foreground)
+    {
+        darkCaption = dark;
+        captionBackground = background;
+        captionForeground = foreground;
+        BackColor = background;
+        status.ForeColor = foreground;
+        web.DefaultBackgroundColor = background;
+        ApplyWindowTheme();
+    }
 
     public StudioWindow()
     {
@@ -45,6 +119,14 @@ internal sealed class StudioWindow : Form
         Size = new Size(1180, 850);
         MinimumSize = new Size(420, 540);
         BackColor = Color.FromArgb(13, 17, 25);
+        try
+        {
+            var preference = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "linux-studio", "appearance");
+            if (File.Exists(preference) && File.ReadAllText(preference).Trim() == "light")
+                SetAppearance(false, Color.FromArgb(237, 244, 250), Color.FromArgb(20, 43, 64));
+        }
+        catch (IOException) { /* The web interface will retry loading the saved theme. */ }
+        catch (UnauthorizedAccessException) { /* Keep the default theme until the web interface loads. */ }
         Icon = brandIcon;
 
         var startup = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 3 };
@@ -111,6 +193,7 @@ internal sealed class StudioWindow : Form
             if (lifetime.IsCancellationRequested) return;
             await web.EnsureCoreWebView2Async(environment);
             if (lifetime.IsCancellationRequested) return;
+            web.CoreWebView2.WebMessageReceived += ReceiveAppearance;
             web.CoreWebView2.NavigationStarting += (_, navigation) =>
             {
                 navigation.Cancel = !Uri.TryCreate(navigation.Uri, UriKind.Absolute, out var target)

@@ -85,6 +85,12 @@ const themeButtons = [...document.querySelectorAll('[data-theme-choice]')];
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
   for (const button of themeButtons) button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme));
+  if (window.chrome?.webview) {
+    const style = getComputedStyle(document.body);
+    const hex = color => '#' + color.match(/[\d.]+/g).slice(0, 3).map(value => Math.round(Number(value)).toString(16).padStart(2, '0')).join('');
+    window.chrome.webview.postMessage({ type: 'appearance', theme,
+      background: hex(style.backgroundColor), foreground: hex(style.color) });
+  }
 }
 let selectedTheme;
 let themeRequest = checkedFetch('/api/appearance')
