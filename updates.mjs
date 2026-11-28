@@ -1,13 +1,13 @@
 import { execFile, spawn } from 'node:child_process';
-import { createHash } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { mkdir, mkdtemp, rename, rm, stat } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rename, rm, stat, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
 import { Readable, Transform } from 'node:stream';
 import { pipeline } from 'node:stream/promises';
 import { promisify } from 'node:util';
 
-export const version = '0.9.2';
+export const version = '0.9.3';
 const repository = 'Anserb/iso-studio';
 const feed = `https://api.github.com/repos/${repository}/releases/latest`;
 const run = promisify(execFile);
@@ -52,6 +52,19 @@ export function createUpdater({ directory, installed, request = fetch, current =
   let status = 'idle';
   let candidate;
   let cached;
+  let completedVersion;
+  const noticePath = join(directory, 'last-install.json');
+  const noticeReady = readFile(noticePath, 'utf8').then(text => {
+    const notice = JSON.parse(text.replace(/^\uFEFF/, ''));
+    if (notice.version === current) completedVersion = current;
+  }).catch(() => {});
+
+  async function acknowledge() {
+    await noticeReady;
+    const notice = await readFile(noticePath, 'utf8').then(text => JSON.parse(text.replace(/^\uFEFF/, ''))).catch(() => null);
+    if (notice?.version === current) await rm(noticePath, { force: true });
+    completedVersion = undefined;
+  }
 
   async function download(update) {
     await mkdir(directory, { recursive: true, mode: 0o700 });
@@ -127,6 +140,9 @@ export function createUpdater({ directory, installed, request = fetch, current =
     if (!update || status !== 'ready') return false;
     status = 'installing';
     try {
+      const temporary = join(directory, `last-install-${randomUUID()}.tmp`);
+      await writeFile(temporary, JSON.stringify({ version: update.version }), { flag: 'wx', mode: 0o600 });
+      await rename(temporary, noticePath);
       if (platform === 'win32') {
         const setup = spawn(update.path, ['/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CLOSEAPPLICATIONS', '/RELAUNCH=1'],
           { detached: true, stdio: 'ignore', windowsHide: true });
@@ -145,13 +161,14 @@ export function createUpdater({ directory, installed, request = fetch, current =
       status = 'installed';
       return true;
     } catch {
+      await rm(noticePath, { force: true }).catch(() => {});
       status = 'ready';
       throw new Error('Η εγκατάσταση της ενημέρωσης απέτυχε. Δοκίμασε ξανά.');
     }
   }
 
   return {
-    check, verifiedUpdate, install,
-    info: () => ({ current, status, version: candidate?.version, canInstall: installed, restartAutomatic: platform === 'win32' && installed }),
+    check, verifiedUpdate, install, acknowledge, ready: noticeReady,
+    info: () => ({ current, status, version: candidate?.version, canInstall: installed, completedVersion, restartAutomatic: platform === 'win32' && installed }),
   };
 }

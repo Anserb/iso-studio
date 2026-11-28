@@ -1,4 +1,5 @@
 import { creationPresets } from './studio-customization.mjs';
+import { createDesktopPreview } from './desktop-preview.mjs';
 
 export function initStudio({ getOptions, applyOptions, onBusy, checkUpdates }) {
   const $ = id => document.getElementById(id);
@@ -40,6 +41,7 @@ export function initStudio({ getOptions, applyOptions, onBusy, checkUpdates }) {
     const link = el('a'); link.download = name; link.href = href; link.click(); setTimeout(() => URL.revokeObjectURL(href), 1000);
   }
   const configuration = () => ({ ...getOptions(), ...extras() });
+  const livePreview = createDesktopPreview({ getConfiguration: configuration });
 
   for (const preset of creationPresets) {
     const card = button('', async () => { applyOptions({ ...getOptions(), desktop: preset.desktop, appearance: preset.appearance, apps: preset.apps }, true); setExtras({ files }); location.hash = 'desktop'; });
@@ -57,23 +59,14 @@ export function initStudio({ getOptions, applyOptions, onBusy, checkUpdates }) {
     }
     const next = [...files.filter(file => !additions.some(item => item.name === file.name)), ...additions];
     if (next.reduce((sum, file) => sum + file.content.length * .75, 0) > 20 * 1024 ** 2) throw new Error('Το σύνολο αρχείων μπορεί να είναι έως 20 MB.');
-    files = next; fileList(); $('personal-files').value = ''; notice('Διάλεξε τον φάκελο προορισμού για κάθε αρχείο. Οι φάκελοι δημιουργούνται στο home του νέου χρήστη.');
+    files = next; fileList(); preview(); $('personal-files').value = ''; notice('Διάλεξε τον φάκελο προορισμού για κάθε αρχείο. Οι φάκελοι δημιουργούνται στο home του νέου χρήστη.');
   }));
   function preview() {
     const eligible = document.querySelector('[name="appearance"]:checked')?.value !== 'default' && document.querySelector('[name="desktop"]:checked')?.value !== 'standard';
     $('custom-enabled').disabled = !eligible;
     const enabled = eligible && $('custom-enabled').checked;
     $('custom-controls').disabled = !enabled;
-    const appearance = document.querySelector('[name="appearance"]:checked')?.value || 'default';
-    const canvas = $('desktop-live-preview'); canvas.dataset.appearance = appearance;
-    canvas.dataset.panel = enabled ? $('custom-panel').value : 'bottom';
-    canvas.dataset.font = enabled ? $('custom-font').value : 'Sans';
-    const svg = $('preview-accent'); svg.setAttribute('fill', enabled ? $('custom-accent').value : '#60c8ff');
-    const wallpaper = enabled && files.find(file => file.name === $('custom-wallpaper').value);
-    const picture = $('preview-wallpaper'); picture.hidden = !wallpaper;
-    if (wallpaper) picture.src = `data:image/${/\.png$/i.test(wallpaper.name) ? 'png' : 'jpeg'};base64,${wallpaper.content}`;
-    else picture.removeAttribute('src');
-    $('preview-font').textContent = `${document.querySelector('[name="desktop"]:checked')?.value || 'desktop'} · ${enabled ? $('custom-font').value : 'Προεπιλογές θέματος'}`;
+    livePreview.render();
   }
   for (const input of document.querySelectorAll('#customization-lab input, #customization-lab select')) input.addEventListener('input', preview);
   document.querySelector('#configuration').addEventListener('input', preview);

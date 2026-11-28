@@ -30,6 +30,7 @@ const linuxApp = join(isAbsolute(dataHome ?? '') ? dataHome : join(homedir(), '.
 const installed = process.platform === 'linux' ? process.getuid() !== 0 && (resolve(root) === await realpath(linuxApp).catch(() => null) || process.env.LINUX_STUDIO_SYSTEM_SETUP === '1')
   : process.platform === 'win32' && process.env.LINUX_STUDIO_WINDOWS_SETUP === '1';
 const updater = createUpdater({ directory: join(dirname(appearance), 'updates'), installed });
+await updater.ready;
 const store = createStudioStore(join(dirname(appearance), 'studio'));
 const appInstaller = createAppInstaller({ onComplete: entry => store.record(entry) });
 const vm = createVmService();
@@ -51,12 +52,17 @@ let applyingUpdate = false;
 const assets = new Map([
   ['/', ['index.html', 'text/html; charset=utf-8']],
   ['/style.css', ['style.css', 'text/css; charset=utf-8']],
+  ['/desktop-preview.css', ['desktop-preview.css', 'text/css; charset=utf-8']],
   ['/app.mjs', ['app.mjs', 'text/javascript; charset=utf-8']],
   ['/catalog.mjs', ['catalog.mjs', 'text/javascript; charset=utf-8']],
   ['/desktop-appearance.mjs', ['desktop-appearance.mjs', 'text/javascript; charset=utf-8']],
   ['/linux-apps.mjs', ['linux-apps.mjs', 'text/javascript; charset=utf-8']],
   ['/app-library.mjs', ['app-library.mjs', 'text/javascript; charset=utf-8']],
   ['/studio-ui.mjs', ['studio-ui.mjs', 'text/javascript; charset=utf-8']],
+  ['/desktop-preview.mjs', ['desktop-preview.mjs', 'text/javascript; charset=utf-8']],
+  ['/assets/fonts/DejaVuSans.ttf', ['assets/fonts/DejaVuSans.ttf', 'font/ttf']],
+  ['/assets/fonts/DejaVuSerif.ttf', ['assets/fonts/DejaVuSerif.ttf', 'font/ttf']],
+  ['/assets/fonts/DejaVuSansMono.ttf', ['assets/fonts/DejaVuSansMono.ttf', 'font/ttf']],
   ['/studio-customization.mjs', ['studio-customization.mjs', 'text/javascript; charset=utf-8']],
   ['/logo.svg', ['assets/linux-studio-logo.svg', 'image/svg+xml']],
 ]);
@@ -359,6 +365,10 @@ const server = createServer(async (request, response) => {
     if (request.method === 'POST' && path === '/api/update/check') {
       void updater.check();
       return json(response, 202, updater.info());
+    }
+    if (request.method === 'POST' && path === '/api/update/acknowledge') {
+      await updater.acknowledge();
+      return json(response, 200, updater.info());
     }
     if (request.method === 'POST' && path === '/api/update/install') {
       if (occupied()) {

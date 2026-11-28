@@ -18,6 +18,9 @@ payload=$tree/opt/linux-studio
 mkdir -p "$payload/app/Linux" "$payload/app/assets" "$payload/runtime" "$tree/usr/share/applications" "$tree/usr/share/icons/hicolor/scalable/apps" "$root/release"
 find "$root" -maxdepth 1 -type f -name '*.mjs' -exec cp -- {} "$payload/app/" \;
 cp -- "$root/index.html" "$root/style.css" "$root/README.md" "$root/LICENSE" "$payload/app/"
+cp -- "$root/desktop-preview.css" "$payload/app/"
+mkdir -p "$payload/app/assets/fonts"
+cp -- "$root/assets/fonts/"* "$payload/app/assets/fonts/"
 cp -- "$root/Linux/launch.mjs" "$root/Linux/install.mjs" "$root/Linux/setup.mjs" "$payload/app/Linux/"
 cp -- "$root/assets/"*.svg "$payload/app/assets/"
 tar -xJf "$archive" -C "$payload/runtime" --strip-components=1 node-v26.13.1-linux-x64/bin/node node-v26.13.1-linux-x64/LICENSE

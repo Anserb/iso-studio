@@ -1,0 +1,82 @@
+@font-face { font-family: 'Studio DejaVu Sans'; src: url('/assets/fonts/DejaVuSans.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Studio DejaVu Serif'; src: url('/assets/fonts/DejaVuSerif.ttf') format('truetype'); font-display: swap; }
+@font-face { font-family: 'Studio DejaVu Mono'; src: url('/assets/fonts/DejaVuSansMono.ttf') format('truetype'); font-display: swap; }
+.desktop-live-preview { --preview-bg: #2e3440; --preview-surface: #3b4252; --preview-text: #eceff4; --preview-accent: #88c0d0; --preview-secondary: #4c566a; --preview-muted: #a5b1c4; --preview-line: #ffffff24; --preview-font: 'Studio DejaVu Sans'; position: relative; isolation: isolate; container: desktop-preview / inline-size; height: clamp(27rem, 39vw, 35rem); min-height: 27rem; margin-top: 1rem; overflow: hidden; border-radius: .85rem; border: 1px solid var(--line); color: var(--preview-text); background: linear-gradient(145deg, var(--preview-bg), var(--preview-secondary)); font-family: var(--preview-font), sans-serif; cursor: none; }
+.desktop-live-preview * { box-sizing: border-box; cursor: inherit; }
+.desktop-live-preview button { font-family: inherit; }
+.desktop-live-preview > img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -1; }
+.desktop-live-preview button { transition: none; }
+.desktop-live-preview svg { display: block; flex: none; }
+.preview-folder { fill: var(--preview-accent); }
+.preview-folder-back { fill: color-mix(in srgb, var(--preview-accent) 65%, #1c4268); }
+.preview-paper { fill: #f3f5f8; stroke: #9aa9b955; }
+.preview-terminal-icon { fill: #17202d; stroke: #ffffff40; }
+[data-icons="Papirus-Dark"] .preview-folder { fill: #80bcf5; }
+[data-icons="Papirus-Light"] .preview-folder { fill: #4b8fce; }
+[data-icons="Papirus"] .preview-folder { fill: #5a9cdb; }
+[data-icons="Papirus-Light"] .preview-paper { fill: #e7edf4; }
+.preview-desktop-icons { position: absolute; top: 1.1rem; left: .7rem; display: grid; gap: .6rem; width: 5.5rem; }
+.preview-desktop-icons button { display: grid; justify-items: center; gap: .2rem; padding: .35rem; border: 0; border-radius: .4rem; background: #0a142222; color: #fff; text-shadow: 0 1px 3px #000; font-size: .62rem; text-align: center; }
+.preview-desktop-icons svg { width: 2.5rem; height: 2.5rem; }
+.preview-native-window { position: absolute; display: flex; flex-direction: column; min-width: 0; border: 1px solid var(--preview-line); border-radius: .65rem; overflow: hidden; background: var(--preview-bg); color: var(--preview-text); box-shadow: 0 .8rem 2rem #0004; font-size: clamp(10px, 1.8cqw, 14px); }
+.preview-files-window { left: 7%; top: 17%; width: 70%; height: 64%; }
+.preview-settings-window { left: 52%; top: 31%; width: 43%; min-height: 56%; }
+.preview-terminal-window { left: 14%; top: 20%; width: 78%; min-height: 55%; background: #111820; color: #e6f0ff; }
+.preview-titlebar { display: flex; align-items: center; justify-content: space-between; gap: .4rem; min-height: 2.2rem; padding: .25rem .55rem; border-bottom: 1px solid var(--preview-line); background: var(--preview-surface); color: var(--preview-text); }
+.preview-titlebar strong { min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: .9em; }
+.preview-titlebar > div { display: flex; flex: none; gap: .1rem; }
+.preview-titlebar button { display: grid; place-items: center; border: 0; background: transparent; color: inherit; padding: .1rem; min-width: 1.25rem; height: 1.25rem; border-radius: .25rem; font-size: 1em; }
+.preview-titlebar button:hover { background: var(--preview-line); }
+.preview-titlebar button[data-preview-close]:hover { background: #d55d66; color: white; }
+.preview-toolbar { display: flex; align-items: center; justify-content: space-between; gap: .4rem; padding: .45rem .55rem; border-bottom: 1px solid var(--preview-line); background: var(--preview-surface); white-space: nowrap; font-size: .9em; }
+.preview-address { flex: 1; overflow: hidden; padding: .2rem .4rem; border: 1px solid var(--preview-line); border-radius: .3rem; text-overflow: ellipsis; }
+.preview-file-body { display: flex; flex: 1; min-height: 0; }
+.preview-file-body nav { display: grid; align-content: start; flex: 0 0 32%; gap: .2rem; padding: .5rem .25rem; border-right: 1px solid var(--preview-line); background: var(--preview-surface); }
+.preview-file-body nav button { min-width: 0; padding: .4rem; border: 0; border-radius: .3rem; background: transparent; color: inherit; text-align: left; font-size: .9em; overflow-wrap: anywhere; }
+.preview-file-body nav .is-selected { background: var(--preview-accent); color: var(--preview-bg); }
+.preview-file-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); align-content: start; flex: 1; min-width: 0; gap: .4rem; padding: .7rem; }
+.preview-file-grid button { display: grid; align-content: center; justify-items: center; min-width: 0; gap: .15rem; padding: .25rem; border: 1px solid transparent; border-radius: .35rem; background: transparent; color: inherit; font-size: .85em; overflow-wrap: anywhere; text-align: center; }
+.preview-file-grid button.is-selected { border-color: var(--preview-accent); background: color-mix(in srgb, var(--preview-accent) 22%, transparent); }
+.preview-file-grid svg { width: 2.3rem; height: 2.3rem; }
+.preview-window-footer { display: flex; justify-content: space-between; gap: .4rem; padding: .35rem .5rem; border-top: 1px solid var(--preview-line); background: var(--preview-surface); color: var(--preview-muted); font-size: .74em; }
+.preview-settings-body { padding: .75rem; }
+.preview-eyebrow { font-size: .65em; letter-spacing: .12em; color: var(--preview-muted); }
+.preview-settings-body h4 { margin: .35rem 0; font-size: 1.15em; }
+.preview-settings-body > p { margin-bottom: .55rem; font-size: .85em; color: var(--preview-muted); }
+.preview-setting-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; padding: .4rem 0; border-bottom: 1px solid var(--preview-line); font-size: .78em; }
+.preview-setting-row strong { font-weight: 400; text-align: right; }
+.preview-swatch { width: 1.6rem; height: .9rem; flex: none; border-radius: .25rem; background: var(--preview-accent); }
+.preview-slider { position: relative; height: .25rem; margin: 1.1rem 0; border-radius: 1rem; background: var(--preview-line); }
+.preview-slider > span { display: block; width: 65%; height: 100%; background: var(--preview-accent); border-radius: inherit; }
+.preview-slider > i { position: absolute; left: 65%; top: -.2rem; width: .65rem; height: .65rem; border-radius: 50%; background: var(--preview-accent); box-shadow: 0 0 0 2px var(--preview-bg); }
+.preview-accent-button { display: flex; width: 100%; align-items: center; justify-content: space-between; gap: .25rem; padding: .5rem; border: 0; border-radius: .35rem; background: var(--preview-accent); color: var(--preview-bg); font-size: .85em; font-weight: 700; }
+.preview-panel { position: absolute; z-index: 500; bottom: 0; left: 0; right: 0; display: flex; align-items: center; gap: .45rem; min-height: 2.6rem; padding: .3rem .6rem; background: var(--preview-surface); color: var(--preview-text); border-top: 1px solid var(--preview-line); font-size: .7rem; box-shadow: 0 -.2rem 1rem #0002; }
+.preview-panel button { display: flex; align-items: center; gap: .3rem; padding: .2rem .35rem; border: 0; border-radius: .35rem; background: transparent; color: inherit; font-size: inherit; }
+.preview-panel button:hover { background: var(--preview-line); }
+.preview-panel svg { width: 1.6rem; height: 1.6rem; }
+.preview-running-apps { display: flex; gap: .15rem; }
+.preview-panel-spacer { flex: 1; }
+.preview-panel time { white-space: nowrap; font-size: .65rem; }
+.preview-tray { white-space: nowrap; font-size: .65rem; }
+.desktop-live-preview[data-panel="top"] .preview-panel { top: 0; bottom: auto; border-bottom: 1px solid var(--preview-line); border-top: 0; }
+.desktop-live-preview[data-panel="dock"] .preview-panel { left: 16%; right: 16%; bottom: .65rem; border-radius: .7rem; border: 1px solid var(--preview-line); }
+.desktop-live-preview[data-panel="dock"] #preview-launcher > span { display: none; }
+.preview-start-menu { position: absolute; z-index: 501; left: .5rem; bottom: 3rem; width: min(15rem, 90%); padding: .8rem; border: 1px solid var(--preview-line); border-radius: .6rem; box-shadow: 0 .7rem 2rem #0006; background: var(--preview-surface); color: var(--preview-text); font-size: .8rem; }
+.preview-start-menu > strong, .preview-start-menu small { display: block; margin-bottom: .6rem; }
+.preview-start-menu small { margin: .7rem 0 0; color: var(--preview-muted); font-size: .65rem; }
+.preview-start-menu button { display: flex; align-items: center; gap: .6rem; width: 100%; padding: .4rem; border: 0; border-radius: .4rem; background: transparent; color: inherit; font-size: inherit; text-align: left; }
+.preview-start-menu button:hover { background: color-mix(in srgb, var(--preview-accent) 25%, transparent); }
+.preview-start-menu svg { width: 1.8rem; height: 1.8rem; }
+.desktop-live-preview[data-panel="top"] .preview-start-menu { top: 3rem; bottom: auto; }
+.preview-terminal-window pre { margin: 0; padding: 1rem; font: .85em/1.7 'Studio DejaVu Mono', monospace; white-space: pre-wrap; }
+.preview-native-window.is-maximized { inset: 3rem .5rem 3.3rem; width: auto; height: auto; }
+.desktop-live-preview[data-desktop="gnome"] .preview-native-window { border-radius: .9rem; }
+.desktop-live-preview[data-desktop="gnome"] .preview-titlebar { min-height: 2.6rem; }
+.desktop-live-preview[data-desktop="gnome"] .preview-desktop-icons { display: none; }
+.desktop-live-preview[data-desktop="xfce"] .preview-native-window { border-radius: .35rem; }
+.desktop-live-preview[data-desktop="xfce"] .preview-titlebar { min-height: 1.85rem; }
+.preview-cursor-layer { position: absolute; inset: 0; z-index: 999; width: 100%; height: 100%; pointer-events: none; overflow: visible; }
+.preview-cursor-layer path { fill: white; stroke: #101722; }
+.desktop-live-preview[data-cursor="Adwaita"] .preview-cursor-layer path { fill: #151a23; stroke: white; }
+@container desktop-preview (max-width: 480px) { .preview-files-window { left: 5%; width: 88%; top: 15%; height: 65%; } .preview-settings-window { left: 34%; top: 34%; width: 62%; } .preview-file-body nav { flex-basis: 30%; } .preview-tray { display: none; } }
+@media (pointer: coarse) { .desktop-live-preview { cursor: default; } .preview-cursor-layer { display: none; } }

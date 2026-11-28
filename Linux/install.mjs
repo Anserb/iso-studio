@@ -2,11 +2,13 @@ import { chmod, copyFile, lstat, mkdir, mkdtemp, readFile, rename, rm, symlink, 
 import { createHash, randomUUID } from 'node:crypto';
 import { homedir } from 'node:os';
 import { basename, dirname, isAbsolute, join } from 'node:path';
+import { version } from '../updates.mjs';
 
 const files = [
   'app.mjs', 'catalog.mjs', 'index.html', 'other-builders.mjs', 'recipe.mjs',
   'server.mjs', 'style.css', 'updates.mjs', 'wsl-build.mjs', 'desktop-appearance.mjs', 'linux-apps.mjs', 'app-library.mjs', 'app-installer.mjs',
-  'studio-customization.mjs', 'studio-ui.mjs', 'studio-store.mjs', 'studio-tools.mjs', 'auto-updates.mjs', 'assets/linux-studio-logo.svg', 'Linux/launch.mjs', 'LICENSE',
+  'studio-customization.mjs', 'studio-ui.mjs', 'studio-store.mjs', 'studio-tools.mjs', 'auto-updates.mjs', 'desktop-preview.mjs', 'desktop-preview.css',
+  'assets/fonts/DejaVuSans.ttf', 'assets/fonts/DejaVuSerif.ttf', 'assets/fonts/DejaVuSansMono.ttf', 'assets/fonts/LICENSE.txt', 'assets/linux-studio-logo.svg', 'Linux/launch.mjs', 'LICENSE',
 ];
 const app = new URL('../', import.meta.url);
 
@@ -93,6 +95,14 @@ Icon=${join(target, 'assets', 'linux-studio-logo.svg')}
 Terminal=false
 Categories=Utility;
 `);
+  try {
+  const config = isAbsolute(process.env.XDG_CONFIG_HOME ?? '') ? process.env.XDG_CONFIG_HOME : join(home, '.config');
+  const noticeDirectory = join(config, 'linux-studio', 'updates');
+  await mkdir(noticeDirectory, { recursive: true, mode: 0o700 });
+  const noticeTemporary = join(noticeDirectory, `notice-${randomUUID()}.tmp`);
+  await writeFile(noticeTemporary, JSON.stringify({ version }), { flag: 'wx', mode: 0o600 });
+  await rename(noticeTemporary, join(noticeDirectory, 'last-install.json'));
+  } catch { /* A missing completion notice must not fail an otherwise completed installation. */ }
   console.log(`Εγκαταστάθηκε. Άνοιξε το Linux Studio από το μενού ή εκτέλεσε:\n${shellQuote(launcher)}`);
 } catch (error) {
   console.error(`Η εγκατάσταση απέτυχε: ${error.message}`);

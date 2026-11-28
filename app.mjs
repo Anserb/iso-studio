@@ -16,6 +16,10 @@ const updateCheck = byId('update-check');
 const updateStatus = byId('update-status');
 const updateInstall = byId('update-install');
 const updateFile = byId('update-file');
+const updateBanner = byId('update-banner');
+const bannerInstall = byId('update-banner-install');
+let latestUpdate;
+let dismissedUpdate;
 let updateTimer;
 let installingUpdate = false;
 let automaticRestart = false;
@@ -301,6 +305,7 @@ function setBusy(value) {
   setupBuilder.disabled = busy || libraryBusy || studioBusy || checkingEnvironment || installingUpdate;
   checkBuilder.disabled = busy || libraryBusy || studioBusy || checkingEnvironment || installingUpdate;
   updateInstall.disabled = busy || libraryBusy || studioBusy || installingUpdate;
+  renderUpdateBanner();
   document.dispatchEvent(new CustomEvent('studio-busy', { detail: busy || installingUpdate || libraryBusy || studioBusy }));
 }
 
@@ -329,7 +334,37 @@ function updateMessage(message, error = false) {
   updateStatus.toggleAttribute('data-error', error);
 }
 
+function renderUpdateBanner(info = latestUpdate) {
+  if (!info) return;
+  const blocked = busy || libraryBusy || studioBusy || installingUpdate;
+  const key = `${info.status}:${info.version || info.completedVersion || ''}`;
+  const states = {
+    downloading: ['Λήψη ενημέρωσης…', `Λαμβάνεται και ελέγχεται η έκδοση ${info.version || ''}.`],
+    ready: ['Διαθέσιμη ενημέρωση', blocked ? 'Η εγκατάσταση θα είναι διαθέσιμη όταν ολοκληρωθεί η τρέχουσα εργασία.' : `Η έκδοση ${info.version} είναι έτοιμη για εγκατάσταση.`],
+    installing: ['Εγκατάσταση ενημέρωσης…', 'Περίμενε να ολοκληρωθεί η εγκατάσταση.'],
+    installed: info.restartAutomatic
+      ? ['Επανεκκίνηση…', 'Η ενημέρωση εφαρμόζεται και το Linux Studio θα ανοίξει ξανά αυτόματα.']
+      : ['Ολοκληρώθηκε η εγκατάσταση', 'Κλείσε και άνοιξε ξανά το Linux Studio για να χρησιμοποιήσεις τη νέα έκδοση.'],
+    unavailable: ['Δεν ολοκληρώθηκε ο έλεγχος ενημερώσεων', info.error || 'Μπορείς να δοκιμάσεις ξανά από τις Ενημερώσεις.'],
+  };
+  const state = states[info.status] || (info.completedVersion ? ['Ολοκληρώθηκε η εγκατάσταση', `Το Linux Studio ${info.completedVersion} είναι έτοιμο.`] : null);
+  updateBanner.hidden = !state || dismissedUpdate === key;
+  if (!state) return;
+  updateBanner.dataset.state = info.status;
+  if (byId('update-banner-title').textContent !== state[0]) byId('update-banner-title').textContent = state[0];
+  if (byId('update-banner-detail').textContent !== state[1]) byId('update-banner-detail').textContent = state[1];
+  bannerInstall.hidden = info.status !== 'ready' || !info.canInstall;
+  bannerInstall.disabled = blocked;
+  const installLabel = info.restartAutomatic ? 'Εγκατάσταση και επανεκκίνηση' : 'Εγκατάσταση';
+  if (bannerInstall.textContent !== installLabel) bannerInstall.textContent = installLabel;
+  byId('update-banner-file').hidden = info.status !== 'ready' || info.canInstall;
+  byId('update-banner-dismiss').hidden = !['unavailable', 'installed'].includes(info.status)
+    && !(info.completedVersion && !['ready', 'downloading', 'installing'].includes(info.status));
+}
+
 function renderUpdate(info) {
+  latestUpdate = info;
+  renderUpdateBanner();
   if (loadedVersion && loadedVersion !== info.current) { location.reload(); return; }
   loadedVersion ??= info.current;
   const active = ['idle', 'checking', 'downloading', 'installing'].includes(info.status);
@@ -362,16 +397,28 @@ async function refreshUpdate(action = '') {
     renderUpdate(await response.json());
   } catch (error) {
     updateMessage(error.message, true);
+    if (action === '/install' || !['installing', 'installed'].includes(latestUpdate?.status)) {
+      latestUpdate = { ...latestUpdate, status: 'unavailable', error: error.message };
+      renderUpdateBanner();
+    }
     updateCheck.disabled = false;
   }
 }
 
 updateCheck.addEventListener('click', () => void refreshUpdate('/check'));
+bannerInstall.addEventListener('click', () => updateInstall.click());
+byId('update-banner-dismiss').addEventListener('click', async () => {
+  dismissedUpdate = `${latestUpdate?.status}:${latestUpdate?.version || latestUpdate?.completedVersion || ''}`;
+  updateBanner.hidden = true;
+  if (latestUpdate?.completedVersion) {
+    try { await checkedFetch('/api/update/acknowledge', { method: 'POST' }); }
+    catch { /* Keep the dismissal for this session if acknowledgement is unavailable. */ }
+  }
+});
 updateInstall.addEventListener('click', async () => {
-  const message = automaticRestart ? 'Να εγκατασταθεί η ενημέρωση και να ανοίξει ξανά το Linux Studio;'
-    : 'Να εγκατασταθεί η ενημέρωση του Linux Studio;';
-  if (busy || libraryBusy || studioBusy || installingUpdate || !confirm(message)) return;
+  if (busy || libraryBusy || studioBusy || installingUpdate || latestUpdate?.status !== 'ready' || !latestUpdate.canInstall) return;
   installingUpdate = true;
+  latestUpdate = { ...latestUpdate, status: 'installing' };
   setBusy(busy);
   updateMessage('Εγκατάσταση ενημέρωσης…');
   try {

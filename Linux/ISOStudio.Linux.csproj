@@ -5,10 +5,12 @@
 	<Nullable>enable</Nullable>
 	<ImplicitUsings>enable</ImplicitUsings>
 	<AssemblyName>ISOStudio</AssemblyName>
-	<Version>0.9.2</Version>
+	<Version>0.9.3</Version>
 	<RootNamespace>ISOStudio.Linux</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
+    <Content Include="../desktop-preview.css" Link="app/desktop-preview.css" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+    <Content Include="../assets/fonts/*" Link="app/assets/fonts/%(Filename)%(Extension)" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
     <Content Include="../*.mjs;../index.html;../style.css"
              Link="app/%(Filename)%(Extension)"
              CopyToOutputDirectory="PreserveNewest"

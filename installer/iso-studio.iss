@@ -44,6 +44,18 @@ Filename: "{app}\{#AppExe}"; Description: "{cm:LaunchProgram,{#AppName}}"; Flags
 Filename: "{app}\{#AppExe}"; Flags: nowait skipifnotsilent; Check: RelaunchRequested
 
 [Code]
+procedure CurStepChanged(CurStep: TSetupStep);
+var
+  NoticeDir: String;
+begin
+  if CurStep = ssPostInstall then
+  begin
+    NoticeDir := ExpandConstant('{localappdata}\linux-studio\updates');
+    if ForceDirectories(NoticeDir) then
+      SaveStringToFile(NoticeDir + '\last-install.json', '{"version":"{#AppVersion}"}', False);
+  end;
+end;
+
 function RelaunchRequested: Boolean;
 begin
   Result := ExpandConstant('{param:RELAUNCH|0}') = '1';

@@ -6,6 +6,7 @@
   <meta name="color-scheme" content="dark light">
   <title>Linux Studio — Δημιουργία Linux ISO</title>
   <link rel="stylesheet" href="/style.css">
+  <link rel="stylesheet" href="/desktop-preview.css">
   <link rel="icon" type="image/svg+xml" href="/logo.svg">
   <script type="module" src="/app.mjs"></script>
 </head>
@@ -25,7 +26,7 @@
       <a href="https://linuxstudio.pvgaming.uk/guide" target="_blank" rel="noopener"><span aria-hidden="true">↗</span> Οδηγός</a>
     </nav>
     <div class="sidebar-footer">
-      <span class="version">Linux Studio v0.9.2 · Windows / Linux</span>
+      <span class="version">Linux Studio v0.9.3 · Windows / Linux</span>
       <div class="theme-picker" role="group" aria-label="Θέμα εφαρμογής">
         <button type="button" data-theme-choice="dark" aria-pressed="true">Σκούρο</button>
         <button type="button" data-theme-choice="light" aria-pressed="false">Φωτεινό</button>
@@ -39,6 +40,11 @@
     </div>
   </aside>
   <main class="page" id="main">
+    <section id="update-banner" class="update-banner" role="status" aria-live="polite" aria-atomic="true" hidden>
+      <span class="update-banner-icon" aria-hidden="true">↻</span>
+      <div class="update-banner-copy"><strong id="update-banner-title"></strong><p id="update-banner-detail"></p></div>
+      <div class="update-banner-actions"><button id="update-banner-install" type="button" hidden>Εγκατάσταση</button><a id="update-banner-file" href="/api/update/file" download hidden>Λήψη ενημέρωσης</a><button id="update-banner-dismiss" class="update-banner-dismiss" type="button" hidden>Εντάξει</button></div>
+    </section>
     <p id="studio-notice" class="studio-notice" role="status" hidden></p>
     <section id="my-apps" data-studio-page hidden aria-labelledby="my-apps-title"><header class="intro"><div><span class="library-eyebrow">ΤΟ ΣΥΣΤΗΜΑ ΣΟΥ</span><h1 id="my-apps-title">Οι εφαρμογές μου</h1><p>Άνοιγμα, ενημέρωση και απεγκατάσταση των εγκατεστημένων εκδόσεων Flatpak.</p></div><button class="secondary" id="managed-refresh" type="button">Ανανέωση ↻</button></header><div id="managed-apps" class="studio-grid"></div></section>
     <section id="profiles" data-studio-page hidden aria-labelledby="profiles-title"><header class="intro"><div><span class="library-eyebrow">ΔΗΜΙΟΥΡΓΗΣΕ / ΚΡΑΤΗΣΕ / ΜΟΙΡΑΣΟΥ</span><h1 id="profiles-title">Τα προφίλ μου</h1><p>Αποθήκευσε τις επιλογές και τα αρχεία του ISO σου. Εξήγαγε ένα προφίλ και συνέχισε σε άλλο υπολογιστή.</p></div><label class="secondary file-upload">Εισαγωγή προφίλ<input type="file" id="import-profile" accept="application/json,.json"></label></header><div id="profile-list" class="studio-grid"></div></section>
@@ -115,7 +121,7 @@
                 <p class="appearance-caption">Οι προεπισκοπήσεις δείχνουν την παλέτα και τη διάταξη. Τα παράθυρα και τα μενού προσαρμόζονται στο Xfce, GNOME ή KDE που διάλεξες. Η προεπιλογή διανομής κρατά την αρχική της εμφάνιση.</p>
               </div>
               <p id="appearance-terminal" class="empty-note" hidden>Διάλεξε γραφικό περιβάλλον για να προεγκαταστήσεις θέμα.</p>
-              <section id="customization-lab" class="customization-lab"><h3>Εργαστήριο εμφάνισης</h3><label class="studio-toggle"><input type="checkbox" id="custom-enabled"> Δικές μου ρυθμίσεις πάνω στο επιλεγμένο θέμα</label><p class="studio-help">Διάλεξε θέμα από πάνω για να ενεργοποιήσεις τις πρόσθετες ρυθμίσεις. Η προεπισκόπηση δείχνει τη διάταξη και τα χρώματα· η τελική εμφάνιση προσαρμόζεται στο desktop.</p><fieldset id="custom-controls" class="field-grid" disabled><legend class="visually-hidden">Πρόσθετες ρυθμίσεις εμφάνισης</legend><label>Χρώμα έμφασης<input id="custom-accent" type="color" value="#60c8ff"></label><label>Εικονίδια<select id="custom-icons"><option value="auto">Του θέματος</option><option>Papirus</option><option>Papirus-Dark</option><option>Papirus-Light</option></select></label><label>Γραμματοσειρά<select id="custom-font"><option>Sans</option><option>DejaVu Sans</option><option>DejaVu Serif</option><option>DejaVu Sans Mono</option></select></label><label>Δείκτης ποντικιού<select id="custom-cursor"><option value="auto">Του θέματος</option><option>Adwaita</option></select></label><label>Γραμμή εργασιών<select id="custom-panel"><option value="bottom">Κάτω</option><option value="top">Πάνω</option><option value="dock">Συμπαγές dock</option></select></label><label>Ταπετσαρία από τα αρχεία σου<select id="custom-wallpaper"><option value="">Χρώματα θέματος</option></select></label></fieldset><div id="desktop-live-preview" class="desktop-live-preview" aria-label="Ενδεικτική προεπισκόπηση εμφάνισης"><img id="preview-wallpaper" alt="Προεπισκόπηση ταπετσαρίας" hidden><div class="preview-window"><span>Linux Studio</span><strong>Το δικό σου Linux.</strong><small id="preview-font"></small><svg width="140" height="28" aria-hidden="true"><rect id="preview-accent" width="140" height="28" rx="7" fill="#60c8ff"/></svg></div><div class="preview-panel">⊞　▣　◉　◇ <span>12:00</span></div></div></section>
+              <section id="customization-lab" class="customization-lab"><h3>Εργαστήριο εμφάνισης</h3><label class="studio-toggle"><input type="checkbox" id="custom-enabled"> Δικές μου ρυθμίσεις πάνω στο επιλεγμένο θέμα</label><p class="studio-help">Διάλεξε θέμα από πάνω για να ενεργοποιήσεις τις πρόσθετες ρυθμίσεις. Η προεπισκόπηση δείχνει τη διάταξη και τα χρώματα· η τελική εμφάνιση προσαρμόζεται στο desktop.</p><fieldset id="custom-controls" class="field-grid" disabled><legend class="visually-hidden">Πρόσθετες ρυθμίσεις εμφάνισης</legend><label>Χρώμα έμφασης<input id="custom-accent" type="color" value="#60c8ff"></label><label>Εικονίδια<select id="custom-icons"><option value="auto">Του θέματος</option><option>Papirus</option><option>Papirus-Dark</option><option>Papirus-Light</option></select></label><label>Γραμματοσειρά<select id="custom-font"><option>Sans</option><option>DejaVu Sans</option><option>DejaVu Serif</option><option>DejaVu Sans Mono</option></select></label><label>Δείκτης ποντικιού<select id="custom-cursor"><option value="auto">Του θέματος</option><option>Adwaita</option></select></label><label>Γραμμή εργασιών<select id="custom-panel"><option value="bottom">Κάτω</option><option value="top">Πάνω</option><option value="dock">Συμπαγές dock</option></select></label><label>Ταπετσαρία από τα αρχεία σου<select id="custom-wallpaper"><option value="">Χρώματα θέματος</option></select></label></fieldset><p class="studio-help">Ζωντανή προεπισκόπηση: δοκίμασε το μενού εφαρμογών και τα παράθυρα παρακάτω. Οι ακριβείς λεπτομέρειες ακολουθούν την έκδοση της διανομής και του desktop.</p><div id="desktop-live-preview" class="desktop-live-preview" aria-label="Ζωντανή προεπισκόπηση Linux"></div></section>
             </section>
             <section class="panel" id="regional" data-page aria-labelledby="regional-title" hidden>
               <header class="section-title"><span class="section-icon" aria-hidden="true">◎</span><div><h2 id="regional-title">Γλώσσα και πληκτρολόγιο</h2><p>Ρύθμισε τις προεπιλογές που θα χρησιμοποιεί η εικόνα Live.</p></div></header>
