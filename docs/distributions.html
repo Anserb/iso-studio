@@ -4,17 +4,30 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#071512">
-  <meta name="description" content="Λήψη Linux Studio για Debian, Ubuntu, Arch Linux και Fedora.">
-  <title>Διανομές και λήψεις — Linux Studio</title>
-  <link rel="stylesheet" href="style.css">
-  <script src="distributions.js" defer></script>
+  <meta name="description" content="Συμβατές διανομές Linux, λήψεις και Live ISO.">
+  <title>Διανομές — Linux Studio</title>
+  <link rel="canonical" href="https://linuxstudio.pvgaming.uk/distributions">
+  <link rel="icon" type="image/svg+xml" href="/linux-studio-logo.svg">
+  <link rel="stylesheet" href="/style.css?v=pages">
+  <script src="/studio.js?v=pages" defer></script>
+  <script src="/distributions.js" defer></script>
 </head>
 <body>
+  <canvas id="terrain" aria-hidden="true"></canvas>
   <header class="top wrap">
-    <a class="brand" href="./"><span class="mark" aria-hidden="true">&gt;_</span> Linux<span>Studio</span></a>
-    <nav aria-label="Κύρια πλοήγηση"><a href="./#app">Εφαρμογή</a><a href="./distributions.html" aria-current="page">Διανομές</a><a href="./#support">Υποστήριξη</a></nav>
+    <a class="brand" href="/" aria-label="Linux Studio, αρχική"><span class="mark" aria-hidden="true">&gt;_</span> Linux<span>Studio</span></a>
+    <nav aria-label="Κύρια πλοήγηση">
+      <a href="/">Αρχική</a>
+      <a href="/app">Εφαρμογή</a>
+      <a href="/distributions" aria-current="page">Διανομές</a>
+      <a href="/demo">Demo</a>
+      <a href="/download">Λήψεις</a>
+      <a href="/support">Υποστήριξη</a>
+    </nav>
+    <button id="motion" class="motion" type="button" aria-pressed="false">Παύση κίνησης</button>
   </header>
-  <main class="wrap">
+  <main class="site-main">
+    <div class="wrap">
     <section class="distro-intro">
       <p class="eyebrow">/ LINUX STUDIO DOWNLOADS</p>
       <h1>Διανομές και λήψεις</h1>
@@ -30,12 +43,9 @@
       </div>
       <div class="build-note distro-install" id="install">
         <h3>Εγκατάσταση σε Linux x86-64</h3>
-        <p>Το ίδιο πακέτο Linux Studio χρησιμοποιείται και στις τέσσερις διανομές. Χρειάζεσαι Node.js 22 ή νεότερο. Από τον φάκελο λήψεων, εκτέλεσε ως κανονικός χρήστης:</p>
-        <pre><code>tar -xzf linux-studio-linux.tar.gz
-cd LinuxStudio
-node Linux/install.mjs</code></pre>
+        <p>Διάλεξε .deb για Debian/Ubuntu/Mint, .rpm για Fedora/openSUSE ή τον γραφικό .run installer για Arch/Manjaro και άλλες σύγχρονες διανομές. Όλα περιλαμβάνουν Node.js και εγκαθίστανται χωρίς εντολές τερματικού.</p>
         <p>Άνοιξε το Linux Studio από το μενού εφαρμογών. Για δημιουργία ISO, χρειάζεσαι σύνδεση στο διαδίκτυο και τουλάχιστον 30 GB ελεύθερου χώρου.</p>
-        <div class="actions"><a class="primary" href="https://linuxstudio.pvgaming.uk/linux-studio-linux.tar.gz">Λήψη πακέτου Linux ↓</a><a class="secondary" href="https://linuxstudio.pvgaming.uk/guide.html">Αναλυτικός οδηγός ↗</a></div>
+        <div class="actions"><a class="primary" href="/download">Επιλογή Linux installer ↓</a><a class="secondary" href="https://linuxstudio.pvgaming.uk/guide.html">Αναλυτικός οδηγός ↗</a></div>
       </div>
     </section>
     <section class="distro-section" aria-labelledby="releases-title">
@@ -44,7 +54,23 @@ node Linux/install.mjs</code></pre>
       <p class="release-status" id="release-status" role="status">Δεν υπάρχουν ακόμη καταχωρισμένες εκδόσεις Live ISO.</p>
       <div class="distro-grid" id="iso-releases"></div>
     </section>
+    <section class="distro-section" id="distros">
+      <div class="section-title reveal"><p class="eyebrow">/ ΣΥΜΒΑΤΟΤΗΤΑ</p><h2>Οι διαθέσιμες διανομές.</h2><p>Διάλεξε μια διανομή για να τη φορτώσεις στο demo του εργαστηρίου.</p></div>
+      <div class="table-scroll reveal" role="region" aria-label="Πίνακας συμβατότητας διανομών" tabindex="0">
+        <table>
+          <thead><tr><th scope="col">Διανομή</th><th scope="col">Kernel</th><th scope="col">Desktop</th><th scope="col">Εργαλείο build</th></tr></thead>
+          <tbody>
+            <tr><th scope="row"><a href="/demo?distro=debian-13">Debian 13 ↗</a></th><td>Standard, Real-time</td><td>Xfce, GNOME, KDE Plasma, τερματικό</td><td><code>live-build</code></td></tr>
+            <tr><th scope="row"><a href="/demo?distro=ubuntu-24.04">Ubuntu 24.04 LTS ↗</a></th><td>Generic, HWE, Low-latency</td><td>Xfce, GNOME, KDE Plasma, τερματικό</td><td>Casper, debootstrap, GRUB</td></tr>
+            <tr><th scope="row"><a href="/demo?distro=arch">Arch Linux ↗</a></th><td>Standard, LTS, Zen, Hardened</td><td>Xfce, τερματικό</td><td><code>archiso</code></td></tr>
+            <tr><th scope="row"><a href="/demo?distro=fedora-44">Fedora 44 ↗</a></th><td>Standard, Debug</td><td>Xfce, GNOME, KDE Plasma, τερματικό</td><td>Lorax</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="build-note reveal"><strong>Πού γίνεται το build;</strong><p>Χρειάζεσαι x86-64, σύνδεση στο διαδίκτυο και τουλάχιστον 30 GB ελεύθερου χώρου. Στο Linux, χρησιμοποίησε την αντίστοιχη διανομή. Στα Windows, Debian, Ubuntu και Arch χτίζονται μέσω WSL 2. Το Fedora χτίζεται σε αποκλειστική εικονική μηχανή Fedora.</p></div>
+    </section>
+    </div>
   </main>
-  <footer class="wrap"><span>Linux Studio</span><div><a href="./">Αρχική</a><a href="./#support">Υποστήριξη</a></div></footer>
+  <footer class="wrap"><span>Linux Studio</span><div><a href="/account">Λογαριασμός</a><a href="/guide">Οδηγός</a><a href="https://github.com/Anserb/iso-studio">GitHub ↗</a></div></footer>
 </body>
 </html>
